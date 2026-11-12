@@ -11,7 +11,7 @@ npm install
 npm run dev   # http://localhost:3000 — no database setup needed locally
 ```
 
-## Key Design decisions
+## Key Design Decisions
 
 While I made many different decisions regarding how this product should look and feel, these are the main ones I want to highlight:
 
@@ -35,7 +35,7 @@ desk. Saving a draft drops the invoice downward, back into the pile, and deletin
 fall apart. Where it goes, and how it goes, tells you whether it was delivered, filed, or destroyed.
 
 
-## Key Technical decisions
+## Key Technical Decisions
 
 Same here. Plenty of smaller choices are in the code, but these are the main desicions I want to highlight:
 
@@ -46,7 +46,7 @@ natural fit. The schema spells out the whole invoice, from the customer, status,
 items and the activity log.
 
 
-### Making the interface feel fast
+### Making the Interface Feel Fast
 
 Bookkeeping is a lot of small, repeated actions, so the screen has to respond as soon as you take one. React Query
 keeps the invoices on the client, and most actions update that cache before the server
@@ -59,7 +59,7 @@ when the page loads, and changing pages keeps the current rows on screen while t
 flashing an empty table. The following page is fetched in the background, which means Next is usually already there
 when you click it. Known customers are kept around for the form, and creating an invoice bumps the next invoice number locally, so the draft after this one can show its number right away.
 
-## What's next
+## What's Next
 
 This version covers the ledger, the motion, and how the data is stored. I didn't get to the AI piece, and a few steps
 after an invoice is sent are still missing. Next I'd want to add functionality to:
