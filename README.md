@@ -1,10 +1,22 @@
+
 # Rillet Design Challenge
 
 This is a small accounts-receivable app where you can create invoices, save them as drafts, send them, and follow them
 until they're paid or voided.
 
+https://github.com/user-attachments/assets/2381eb40-097c-4205-97cc-b0abd3606752
+
 **Live demo:** [rillet-pearl.vercel.app](https://rillet-pearl.vercel.app/) · **Stack:** Next.js 16, React 19, Tailwind v4, Base UI, React Query, Drizzle, Postgres
 (Supabase in production)
+
+
+
+
+
+## Run it Locally
+
+Install the dependencies, start the dev server, and open http://localhost:3000.
+
 
 ```bash
 npm install
@@ -15,49 +27,46 @@ npm run dev   # http://localhost:3000 — no database setup needed locally
 
 While I made many different decisions regarding how this product should look and feel, these are the main ones I want to highlight:
 
-### Treating the Invoice List as a Ledger
+### 1. Treating the invoice List as a ledger
 
-Bookkeeping depends on trusting the record, so every issued invoice stays in the list until someone deliberately
-removes it.
+Accounting managers use this list to match payments to what was billed, so I wanted to make sure that this list could serve as a source of truth.
 
-When an open or overdue invoice is wrong, you void it, and the row stays with its number and its history. That's the correction an accountant already expects, since the entry
-remains in the books and the cancellation sits right beside it. Similarly, deleting is its own, explicit action, and it's only offered for drafts, which were never issued, and for voided invoices, which have already been cancelled.
+When an open or overdue invoice is wrong, you void it, and the row stays with its history intact. Similarly, deleting is its own, explicit action, and it's only offered for drafts, which were never issued, and for voided invoices, which have already been cancelled.
 
-### Communicating Through Motion
+https://github.com/user-attachments/assets/4ba2866e-537f-4eb6-a283-7096f341a605
 
-Once you've been staring at amounts, dates, and statuses all day, one more sentence doesn't really tell you what just
-happened. "Invoice sent to Acme Labs" turns into one more line to
-decode, and a confirmation dialog has the same problem, because it asks you to read a paragraph and trust that the words match what the system actually did.
+### 2. Communicating through motion
 
-That's why I decided to focus on animations, and let the invoices themselves show what happened. When you send an
+Once you've been staring at amounts, dates, and statuses all day, one more sentence doesn't really mean much. I wanted users to really feel the weight behind their actions, as opposed to forcing them to read yet another line of text in some confirmation dialog.
+
+That's why I decided to focus on animations, and let the invoices themselves show how state has changed. When you send an
 an invoice, it lifts off the top of the screen, the way a document leaves your
 desk. Saving a draft drops the invoice downward, back into the pile, and deleting cuts it into strips and lets them
 fall apart. Where it goes, and how it goes, tells you whether it was delivered, filed, or destroyed.
+
+https://github.com/user-attachments/assets/58302c68-7e2e-4fb4-8a15-c9c452c0407e
 
 
 ## Key Technical Decisions
 
 Same here. Plenty of smaller choices are in the code, but these are the main desicions I want to highlight:
 
-### Storing invoices in Postgres
+### 1. Storing invoices in Postgres
 
-Financial data usually follows a very defined structure, and an invoice is no exception, so Postgres seemed like a
-natural fit. The schema spells out the whole invoice, from the customer, status, and dates through to the line
+Financial data usually follows a well defined structure, and an invoice is no exception, so Postgres seemed like a
+natural fit. The schema spells out the whole invoice, from the customer, status, and dates all the way through to the line
 items and the activity log.
 
 
-### Making the Interface Feel Fast
+### 2. Making the interface feel fast
 
-Bookkeeping is a lot of small, repeated actions, so the screen has to respond as soon as you take one. React Query
+Professional software shouldn't get in the way of the work, so I made sure to reflect changes in state immediately, as opposed to waiting for long network round trips. React Query
 keeps the invoices on the client, and most actions update that cache before the server
-has answered, so
-sending, saving, voiding, and deleting change the table right away. Animations and the list never sit there waiting
-on the network. If the request fails, the change rolls back, and once it finishes the app refetches so the server's version replaces what was shown.
+has answered, so sending, saving, voiding, and deleting change the table immediately.
 
 Moving around the list works the same way. The first page is rendered on the server, so the table is already filled in
-when the page loads, and changing pages keeps the current rows on screen while the next ones arrive, rather than
-flashing an empty table. The following page is fetched in the background, which means Next is usually already there
-when you click it. Known customers are kept around for the form, and creating an invoice bumps the next invoice number locally, so the draft after this one can show its number right away.
+when the page loads. The following page is fetched in the background, which means the next page is already there
+when you need it. And known customers are kept around for the form, so creating new invoices feels fast.
 
 ## What's Next
 
