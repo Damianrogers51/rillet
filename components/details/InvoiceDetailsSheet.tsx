@@ -136,6 +136,7 @@ export function InvoiceDetailsSheet({
           <>
             <InvoiceDetails
               invoice={invoice}
+              today={today}
               className={panelTransitionClassName}
               inert={sent}
               onEdit={() => startEditing()}

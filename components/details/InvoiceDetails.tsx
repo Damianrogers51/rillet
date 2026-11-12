@@ -16,11 +16,20 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActivityTimeline } from "@/components/details/ActivityTimeline";
 import { EditDraftButton, deleteConfirmation } from "@/components/details/DraftActions";
-import { dateFormat, formatMoney, formatPercent, formatUnitPrice, timestampDateFormat } from "@/lib/format";
+import {
+  dateFormat,
+  daysUntil,
+  formatMoney,
+  formatPercent,
+  formatUnitPrice,
+  pluralizeDays,
+  timestampDateFormat,
+} from "@/lib/format";
 import { invoiceAmounts, lineItemAmountCents, type Invoice, type PaymentStatus } from "@/lib/invoices";
 
 type InvoiceDetailsProps = {
   invoice: Invoice;
+  today: string;
   className?: string;
   inert: boolean;
   onEdit: () => void;
@@ -36,6 +45,7 @@ function openedState(invoice: Invoice) {
 
 export function InvoiceDetails({
   invoice,
+  today,
   className,
   inert,
   onEdit,
@@ -108,7 +118,9 @@ export function InvoiceDetails({
             <DetailRow label="Billing address">{invoice.billingAddress || emptyValue}</DetailRow>
             <DetailRow label="Created">{timestampDateFormat.format(new Date(invoice.createdAt))}</DetailRow>
             <DetailRow label="Issued">{draft ? emptyValue : dateFormat.format(new Date(invoice.issueDate))}</DetailRow>
-            <DetailRow label="Due">{dateFormat.format(new Date(invoice.dueDate))}</DetailRow>
+            <DetailRow label="Due">
+              <DueDate invoice={invoice} today={today} />
+            </DetailRow>
             <DetailRow label="Paid">
               {invoice.paidDate ? dateFormat.format(new Date(invoice.paidDate)) : emptyValue}
             </DetailRow>
@@ -179,6 +191,16 @@ function InvoiceSummary({ invoice, total, animate }: { invoice: Invoice; total: 
         )}
       </p>
     </div>
+  );
+}
+
+function DueDate({ invoice, today }: { invoice: Invoice; today: string }) {
+  const overdueDays = invoice.paymentStatus === "Overdue" ? -daysUntil(invoice.dueDate, today) : 0;
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-2">
+      {dateFormat.format(new Date(invoice.dueDate))}
+      {overdueDays > 0 && <span className="text-red-700">{pluralizeDays(overdueDays)} overdue</span>}
+    </span>
   );
 }
 
