@@ -9,17 +9,17 @@ import type { Company, Invoice } from "@/lib/invoices";
 export type Flight = { id: string; invoice: Invoice; rect: DOMRect; centered: boolean };
 
 // Without the preview on screen the invoice has nothing to start from, so it grows in before the ring starts.
-const enterDuration = 320;
-const overlayDuration = 150;
+const enterDuration = 240;
+const overlayDuration = 120;
 // Stands in for the request to send or save the invoice; a ring over the invoice fills until it resolves.
-const mockSendDuration = 500;
-const checkDuration = 200;
+const mockSendDuration = 350;
+const checkDuration = 160;
 // Long enough to register the check before the drawer closes and the invoice shrinks away.
-const shrinkAt = mockSendDuration + checkDuration + 100;
-const shrinkDuration = 280;
+const shrinkAt = mockSendDuration + checkDuration + 70;
+const shrinkDuration = 240;
 // Lifts off while the shrink is still settling so the two read as one motion.
-const flyAt = shrinkAt + 120;
-const flyDuration = 420;
+const flyAt = shrinkAt + 100;
+const flyDuration = 320;
 
 /**
  * Covers a copy of the invoice with a progress ring while it "sends" and draws a check once it has. Then it calls

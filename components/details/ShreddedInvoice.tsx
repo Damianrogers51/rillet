@@ -10,15 +10,15 @@ export type Shred = { id: string; invoice: Invoice; rect: DOMRect };
 const stripCount = 14;
 // Without the preview on screen the invoice has nothing to start from, so it grows in where it's cut instead of moving
 // there from the preview.
-const enterDuration = 320;
-const centerDuration = 320;
+const enterDuration = 200;
+const centerDuration = 200;
 const centeredScale = 0.7;
-const cutDelay = 60;
-const cutDuration = 220;
-const fallDelay = 60;
-const fallDuration = 700;
+const cutDelay = 30;
+const cutDuration = 140;
+const fallDelay = 30;
+const fallDuration = 420;
 // Each strip waits up to this long before falling, so they tumble away one by one rather than as a block.
-const fallStagger = 160;
+const fallStagger = 90;
 // Strips cycle through this many differently seeded warps, so neighbors don't bend in step.
 const warpCount = 4;
 const warpScale = 26;
