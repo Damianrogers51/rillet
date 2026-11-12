@@ -12,7 +12,7 @@ import { dateFormat } from "@/lib/format";
 
 const fieldClassName = twMerge(
   "w-full min-w-0",
-  "border-[0.5px] border-stone-900/15 bg-[#fffefd] text-primary outline-none ring-0 ring-stone-900/[0.07]",
+  "border-[0.5px] border-stone-900/15 bg-surface text-primary outline-none ring-0 ring-stone-900/[0.07]",
   // Dropdowns return focus only after their close animation, so the ring waits before fading to bridge that gap.
   "transition-[border-color,box-shadow,background-color,color] duration-100 [transition-delay:150ms,150ms,0ms,0ms]",
   "placeholder:text-stone-400 placeholder:transition-colors placeholder:duration-100",
@@ -243,13 +243,17 @@ const calendarClassNames = {
     "hover:bg-stone-900/5",
     "focus-visible:ring-2 focus-visible:ring-stone-900/20",
   ),
-  today: "font-medium text-primary",
+  today: twMerge(
+    "[&:not([data-selected])>button]:bg-stone-500",
+    "[&:not([data-selected])>button]:text-stone-50",
+    "[&:not([data-selected])>button]:hover:bg-stone-600",
+  ),
   selected: selectedDayClassName,
   outside: "text-stone-900/25",
   disabled: "text-stone-900/25 [&>button]:cursor-default [&>button]:hover:bg-transparent",
 };
 
-function CalendarChevron({ orientation }: ChevronProps) {
+export function Chevron({ orientation }: Pick<ChevronProps, "orientation">) {
   return (
     <svg
       viewBox="0 0 16 16"
@@ -268,10 +272,11 @@ type DatePickerProps = {
   label: string;
   value: string;
   min?: string;
+  today?: string;
   onChange: (value: string) => void;
 };
 
-export function DatePicker({ label, value, min, onChange }: DatePickerProps) {
+export function DatePicker({ label, value, min, today, onChange }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const selected = parseDate(value);
 
@@ -295,11 +300,12 @@ export function DatePicker({ label, value, min, onChange }: DatePickerProps) {
               required
               selected={selected}
               defaultMonth={selected}
+              today={today ? parseDate(today) : undefined}
               disabled={min ? { before: parseDate(min) } : undefined}
               startMonth={min ? parseDate(min) : undefined}
               showOutsideDays
               classNames={calendarClassNames}
-              components={{ Chevron: CalendarChevron }}
+              components={{ Chevron }}
               onSelect={(date) => {
                 onChange(serializeDate(date));
                 setOpen(false);

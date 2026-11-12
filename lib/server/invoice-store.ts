@@ -8,6 +8,7 @@ import {
   invoiceLimits,
   invoiceNumberAfter,
   isReadyToSend,
+  nowOn,
   type Invoice,
   type InvoiceActivity,
   type LineItem,
@@ -27,8 +28,8 @@ function conflict(error: string): StoreResult<never> {
 }
 
 function toInvoice({ createdAt, paidDate, ...row }: typeof invoices.$inferSelect): Invoice {
-  void createdAt;
-  return paidDate ? { ...row, paidDate } : row;
+  const invoice = { ...row, createdAt: createdAt.toISOString() };
+  return paidDate ? { ...invoice, paidDate } : invoice;
 }
 
 async function findInvoice(id: string) {
@@ -37,8 +38,8 @@ async function findInvoice(id: string) {
   return row ? toInvoice(row) : null;
 }
 
-function activity(id: string, action: string): InvoiceActivity {
-  return { id, timestamp: new Date().toISOString(), actor: "You", action };
+function activity(id: string, action: string, today: string): InvoiceActivity {
+  return { id, timestamp: nowOn(today).toISOString(), actor: "You", action };
 }
 
 // Appends in the database rather than rewriting the list, so concurrent changes can't drop each other's entries.
@@ -57,15 +58,15 @@ async function updateInvoice(id: string, expected: SQL, changes: PgUpdateSetSour
   return row ? toInvoice(row) : null;
 }
 
-function encodeCursor({ issueDate, invoiceNumber, id }: Invoice) {
-  return Buffer.from(JSON.stringify([issueDate, invoiceNumber, id])).toString("base64url");
+function encodeCursor({ createdAt, invoiceNumber, id }: Invoice) {
+  return Buffer.from(JSON.stringify([createdAt, invoiceNumber, id])).toString("base64url");
 }
 
 function decodeCursor(cursor: string) {
   try {
-    const [issueDate, invoiceNumber, id] = JSON.parse(Buffer.from(cursor, "base64url").toString());
-    if ([issueDate, invoiceNumber, id].every((part) => typeof part === "string"))
-      return { issueDate, invoiceNumber, id };
+    const [createdAt, invoiceNumber, id] = JSON.parse(Buffer.from(cursor, "base64url").toString());
+    if ([createdAt, invoiceNumber, id].every((part) => typeof part === "string"))
+      return { createdAt, invoiceNumber, id };
   } catch {}
   return null;
 }
@@ -96,11 +97,11 @@ export async function listInvoices({
           status ? eq(invoices.paymentStatus, status) : undefined,
           // Newest first, so the page after the cursor is everything that sorts below it.
           after
-            ? sql`(${invoices.issueDate}, ${invoices.invoiceNumber}, ${invoices.id}) < (${after.issueDate}::date, ${after.invoiceNumber}, ${after.id})`
+            ? sql`(${invoices.createdAt}, ${invoices.invoiceNumber}, ${invoices.id}) < (${after.createdAt}::timestamptz, ${after.invoiceNumber}, ${after.id})`
             : undefined,
         ),
       )
-      .orderBy(desc(invoices.issueDate), desc(invoices.invoiceNumber), desc(invoices.id))
+      .orderBy(desc(invoices.createdAt), desc(invoices.invoiceNumber), desc(invoices.id))
       .limit(limit + 1),
     db.select({ status: invoices.paymentStatus, total: count() }).from(invoices).groupBy(invoices.paymentStatus),
   ]);
@@ -169,21 +170,26 @@ export async function createInvoice({ id, send, ...input }: CreateInvoiceRequest
   // Someone else can take the next number between reading it and inserting, so a clash just tries the one after.
   for (let attempt = 0; attempt < 5; attempt++) {
     const invoiceNumber = await peekInvoiceNumber(today);
+    const createdAt = nowOn(today);
     const invoice: Invoice = {
       ...input,
       issueDate: today,
+      createdAt: createdAt.toISOString(),
       id,
       invoiceNumber,
       status: send ? "Sent" : "Draft",
       paymentStatus: send ? "Open" : "Unsent",
       activity: [
-        activity(`${invoiceNumber}-created`, send ? "Created the invoice" : "Created a draft invoice"),
-        ...(send ? [activity(`${invoiceNumber}-sent`, "Sent the invoice to the customer")] : []),
+        activity(`${invoiceNumber}-created`, send ? "Created the invoice" : "Created a draft invoice", today),
+        ...(send ? [activity(`${invoiceNumber}-sent`, "Sent the invoice to the customer", today)] : []),
       ],
     };
     if (send && !isReadyToSend(invoice)) return { ok: false, status: 422, error: "This invoice isn't ready to send" };
     try {
-      const [row] = await db.insert(invoices).values(invoice).returning();
+      const [row] = await db
+        .insert(invoices)
+        .values({ ...invoice, createdAt })
+        .returning();
       return { ok: true, value: toInvoice(row) };
     } catch (error) {
       const constraint = uniqueViolation(error);
@@ -204,11 +210,12 @@ export async function replaceInvoice(
   const existing = await findInvoice(id);
   if (!existing) return notFound;
   if (existing.status !== "Draft") return conflict("Only drafts can be edited");
+  const { today } = await getCompany();
   // The issue date and number are fixed once a draft exists.
   const updated = await updateInvoice(id, isDraft, {
     ...input,
     issueDate: existing.issueDate,
-    activity: appendActivity(activity(activityId, "Edited the invoice")),
+    activity: appendActivity(activity(activityId, "Edited the invoice", today)),
   });
   return updated ? { ok: true, value: updated } : conflict("Only drafts can be edited");
 }
@@ -229,17 +236,18 @@ export async function sendInvoice(
     issueDate: today,
     status: "Sent",
     paymentStatus: "Open",
-    activity: appendActivity(activity(activityId, "Sent the invoice to the customer")),
+    activity: appendActivity(activity(activityId, "Sent the invoice to the customer", today)),
   });
   return updated ? { ok: true, value: updated } : conflict("Only drafts can be sent");
 }
 
 export async function voidInvoice(id: string, { activityId }: { activityId: string }): Promise<StoreResult<Invoice>> {
   const voidable = inArray(invoices.paymentStatus, ["Open", "Overdue"]);
+  const { today } = await getCompany();
   const updated = await updateInvoice(id, voidable, {
     status: "Void",
     paymentStatus: "Voided",
-    activity: appendActivity(activity(activityId, "Voided the invoice")),
+    activity: appendActivity(activity(activityId, "Voided the invoice", today)),
   });
   if (updated) return { ok: true, value: updated };
   return (await findInvoice(id)) ? conflict("Only open or overdue invoices can be voided") : notFound;

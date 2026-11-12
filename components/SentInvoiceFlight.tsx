@@ -2,11 +2,14 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { InvoicePreview } from "@/components/InvoicePreview";
 import { PreviewPage } from "@/components/PreviewPage";
+import { splitViewQuery } from "@/components/InvoiceSheetLayout";
 import type { Company, Invoice } from "@/lib/invoices";
 
 /** `centered` moves the invoice to the middle of the screen before it flies, for when the drawer closes behind it. */
 export type Flight = { id: string; invoice: Invoice; rect: DOMRect; centered: boolean };
 
+// Without the preview on screen the invoice has nothing to start from, so it grows in before the ring starts.
+const enterDuration = 320;
 const overlayDuration = 150;
 // Stands in for the request to send or save the invoice; a ring over the invoice fills until it resolves.
 const mockSendDuration = 500;
@@ -58,39 +61,51 @@ export function SentInvoiceFlight({
     const ring = ringRef.current;
     const check = checkRef.current;
     if (!position || !page || !content || !overlay || !ring || !check) return;
+    const entering = !splitViewQuery().matches;
+    const start = entering ? enterDuration : 0;
 
     const sent = setTimeout(() => {
       callbacks.current.onSent(invoice);
       if (statusRef.current) {
         statusRef.current.textContent = draft ? "Draft saved" : `Invoice sent to ${invoice.customerName}`;
       }
-    }, mockSendDuration);
-    const closing = setTimeout(() => callbacks.current.onClose(), shrinkAt);
+    }, start + mockSendDuration);
+    const closing = setTimeout(() => callbacks.current.onClose(), start + shrinkAt);
 
+    const appearing = position.animate(
+      [
+        { opacity: 0, scale: 0.92 },
+        { opacity: 1, scale: 1 },
+      ],
+      { duration: entering ? enterDuration : 0, easing: "cubic-bezier(0.32, 0.72, 0, 1)", fill: "backwards" },
+    );
+
+    // When it grows in, it arrives already covered and blurred, ready for the ring.
     const covering = overlay.animate([{ opacity: 0 }, { opacity: 1 }], {
-      duration: overlayDuration,
+      duration: entering ? 0 : overlayDuration,
       easing: "ease-out",
       fill: "both",
     });
     // Blurring the page itself rather than using a backdrop filter keeps it cheap to move once it flies.
     const blurring = content.animate([{ filter: "blur(0)" }, { filter: "blur(2px)" }], {
-      duration: overlayDuration,
+      duration: entering ? 0 : overlayDuration,
       easing: "ease-out",
       fill: "both",
     });
     const filling = ring.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
       duration: mockSendDuration,
+      delay: start,
       easing: "cubic-bezier(0.3, 0.5, 0.5, 1)",
       fill: "both",
     });
     const succeeding = ring.animate([{ stroke: "rgb(28 25 23 / 0.45)" }, { stroke: "var(--color-emerald-600)" }], {
       duration: checkDuration,
-      delay: mockSendDuration,
+      delay: start + mockSendDuration,
       fill: "both",
     });
     const checking = check.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
       duration: checkDuration,
-      delay: mockSendDuration,
+      delay: start + mockSendDuration,
       easing: "cubic-bezier(0.65, 0, 0.35, 1)",
       fill: "both",
     });
@@ -98,13 +113,13 @@ export function SentInvoiceFlight({
     const centerY = centered ? window.innerHeight / 2 - (rect.top + rect.height / 2) : 0;
     const centering = position.animate([{ translate: "0 0" }, { translate: `${centerX}px ${centerY}px` }], {
       duration: shrinkDuration,
-      delay: shrinkAt,
+      delay: start + shrinkAt,
       easing: "cubic-bezier(0.32, 0.72, 0, 1)",
       fill: "forwards",
     });
     const shrinking = page.animate([{ scale: 1 }, { scale: 0.6 }], {
       duration: shrinkDuration,
-      delay: shrinkAt,
+      delay: start + shrinkAt,
       easing: "cubic-bezier(0.32, 0.72, 0, 1)",
       fill: "forwards",
     });
@@ -112,7 +127,7 @@ export function SentInvoiceFlight({
     const exitY = draft ? window.innerHeight - (rect.top + centerY) + 40 : -(rect.bottom + centerY + 40);
     const rising = page.animate([{ translate: "0 0" }, { translate: `0 ${exitY}px` }], {
       duration: flyDuration,
-      delay: flyAt,
+      delay: start + flyAt,
       easing: "cubic-bezier(0.5, 0, 0.75, 0)",
       fill: "forwards",
     });
@@ -124,19 +139,20 @@ export function SentInvoiceFlight({
     const tilt = (draft ? side : -side) * (4 + Math.random() * 6);
     const drifting = page.animate([{ transform: "translateX(0)" }, { transform: `translateX(${drift}rem)` }], {
       duration: flyDuration,
-      delay: flyAt,
+      delay: start + flyAt,
       easing: "cubic-bezier(0.45, 0, 0.55, 1)",
       fill: "forwards",
     });
     const tilting = page.animate([{ rotate: "0deg" }, { rotate: `${tilt}deg` }], {
       duration: flyDuration,
-      delay: flyAt,
+      delay: start + flyAt,
       easing: "cubic-bezier(0.45, 0, 0.55, 1)",
       fill: "forwards",
     });
     rising.finished.then(onDone, () => {});
 
     const animations = [
+      appearing,
       covering,
       blurring,
       filling,

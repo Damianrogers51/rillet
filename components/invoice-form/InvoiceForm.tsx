@@ -44,6 +44,7 @@ import {
   invoiceLimits,
   lineItemAmountCents,
   markSent,
+  nowOn,
   type Company,
   type Invoice,
 } from "@/lib/invoices";
@@ -162,7 +163,7 @@ export function InvoiceForm({
   const invoiceNumber = editing?.invoiceNumber ?? nextInvoiceNumber;
 
   function buildInvoice(send = false): Invoice {
-    const createdAt = new Date().toISOString();
+    const createdAt = nowOn(today).toISOString();
     const items = lineItems.map(toLineItem);
     const discountableCents = Math.max(
       items.reduce((sum, item) => sum + lineItemAmountCents(item), 0),
@@ -190,6 +191,7 @@ export function InvoiceForm({
       status: send ? "Sent" : "Draft",
       paymentStatus: send ? "Open" : "Unsent",
       issueDate: today,
+      createdAt,
       activity: [
         {
           id: `${invoiceNumber}-created`,
@@ -227,10 +229,9 @@ export function InvoiceForm({
   }
 
   function submitAnimated(invoice: Invoice) {
-    const page = previewPageRect(previewPane.current);
-    const animate = page && !prefersReducedMotion();
+    const animate = !prefersReducedMotion();
     if (animate) setSent(true);
-    onSubmit(invoice, animate ? page : undefined);
+    onSubmit(invoice, animate ? previewPageRect(previewPane.current) : undefined);
   }
 
   function buildEdited(editing: Invoice): Invoice {
@@ -254,7 +255,7 @@ export function InvoiceForm({
         ...editing.activity,
         {
           id: `${invoiceNumber}-edited-${Date.now()}`,
-          timestamp: new Date().toISOString(),
+          timestamp: nowOn(today).toISOString(),
           actor: "You",
           action: "Edited the invoice",
         },
@@ -341,7 +342,7 @@ export function InvoiceForm({
 
           <Section title="Payment">
             <Select label="Currency" value={currency} options={[...currencies]} onChange={setCurrency} />
-            <DatePicker label="Due date" value={dueDate} min={today} onChange={setDueDate} />
+            <DatePicker label="Due date" value={dueDate} min={today} today={today} onChange={setDueDate} />
           </Section>
 
           <Section

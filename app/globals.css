@@ -11,6 +11,20 @@
   --breakpoint-preview: 1024px;
 }
 
+@layer base {
+  /* Set on everything, so elements that transition their colors don't fade the ring in from the text color. */
+  * {
+    outline-color: color-mix(in oklab, var(--color-stone-900) 10%, transparent);
+  }
+
+  /* The same soft ring as a focused input; an outline rather than a shadow so `outline-none` still opts out. */
+  :focus-visible {
+    outline-style: solid;
+    outline-width: 4px;
+    outline-offset: 0;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);

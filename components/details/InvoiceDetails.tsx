@@ -16,7 +16,7 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActivityTimeline } from "@/components/details/ActivityTimeline";
 import { EditDraftButton, deleteConfirmation } from "@/components/details/DraftActions";
-import { dateFormat, formatMoney, formatPercent, formatUnitPrice } from "@/lib/format";
+import { dateFormat, formatMoney, formatPercent, formatUnitPrice, timestampDateFormat } from "@/lib/format";
 import { invoiceAmounts, lineItemAmountCents, type Invoice, type PaymentStatus } from "@/lib/invoices";
 
 type InvoiceDetailsProps = {
@@ -106,9 +106,12 @@ export function InvoiceDetails({
             <DetailRow label="Customer">{invoice.customerName || emptyValue}</DetailRow>
             <DetailRow label="Billing email">{invoice.billingEmail || emptyValue}</DetailRow>
             <DetailRow label="Billing address">{invoice.billingAddress || emptyValue}</DetailRow>
-            <DetailRow label={draft ? "Created" : "Issued"}>{dateFormat.format(new Date(invoice.issueDate))}</DetailRow>
+            <DetailRow label="Created">{timestampDateFormat.format(new Date(invoice.createdAt))}</DetailRow>
+            <DetailRow label="Issued">{draft ? emptyValue : dateFormat.format(new Date(invoice.issueDate))}</DetailRow>
             <DetailRow label="Due">{dateFormat.format(new Date(invoice.dueDate))}</DetailRow>
-            {invoice.paidDate && <DetailRow label="Paid">{dateFormat.format(new Date(invoice.paidDate))}</DetailRow>}
+            <DetailRow label="Paid">
+              {invoice.paidDate ? dateFormat.format(new Date(invoice.paidDate)) : emptyValue}
+            </DetailRow>
             <DetailRow label="Memo">{invoice.memo || emptyValue}</DetailRow>
           </dl>
         </Section>

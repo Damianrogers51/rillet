@@ -15,6 +15,7 @@ type SegmentedFilterProps<Value extends string> = {
   options: FilterOption<Value>[];
   value: Value;
   onChange: (value: Value) => void;
+  className?: string;
 };
 
 export function SegmentedFilter<Value extends string>({
@@ -22,6 +23,7 @@ export function SegmentedFilter<Value extends string>({
   options,
   value,
   onChange,
+  className,
 }: SegmentedFilterProps<Value>) {
   return (
     <ToggleGroup
@@ -30,14 +32,19 @@ export function SegmentedFilter<Value extends string>({
       onValueChange={(groupValue) => {
         if (groupValue[0]) onChange(groupValue[0] as Value);
       }}
-      className="flex flex-wrap items-center gap-1 text-[14px]"
+      className={twMerge(
+        // Scrolls sideways when the options don't fit; the vertical padding keeps focus rings from being clipped.
+        "-my-1 flex items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none]",
+        "text-[14px]",
+        className,
+      )}
     >
       {options.map((option) => (
         <Toggle
           key={option.value}
           value={option.value}
           className={twMerge(
-            "flex items-center gap-2",
+            "flex shrink-0 items-center gap-2",
             "h-8.5 px-4",
             "cursor-pointer rounded-full text-secondary",
             "transition-colors",

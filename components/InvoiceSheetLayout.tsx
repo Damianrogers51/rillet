@@ -33,7 +33,7 @@ export function InvoiceSheetPopup({
     <DialogPortal keepMounted={keepMounted}>
       <DialogBackdrop
         className={twMerge(
-          "fixed inset-0",
+          "fixed inset-0 z-20",
           "bg-stone-900/30",
           "transition-opacity duration-300",
           "data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
@@ -44,7 +44,8 @@ export function InvoiceSheetPopup({
         ref={popup}
         initialFocus={focusPopup ? popup : undefined}
         className={twMerge(
-          "group fixed inset-0 flex",
+          // Above the table's scroll shadows, which sit on their own layer.
+          "group fixed inset-0 z-20 flex",
           "text-[13px]",
           "text-secondary outline-none",
           "transition-opacity duration-300",
@@ -191,10 +192,23 @@ export function PreviewPane({ ref, pageClassName, onDismiss, children }: Preview
   );
 }
 
-/** Where the preview page sits on screen; undefined while the pane is hidden on narrow screens. */
+/** Matches screens wide enough to show the preview beside the side panel. */
+export function splitViewQuery() {
+  const breakpoint = getComputedStyle(document.documentElement).getPropertyValue("--breakpoint-preview") || "1024px";
+  return window.matchMedia(`(min-width: ${breakpoint})`);
+}
+
+/**
+ * Where the preview page sits on screen, for the send and delete animations to start from. On narrow screens the pane
+ * is hidden, so they start from a page-shaped area in the middle of the screen instead.
+ */
 export function previewPageRect(pane: HTMLElement | null) {
   const rect = pane?.firstElementChild?.getBoundingClientRect();
-  return rect?.width ? rect : undefined;
+  if (rect?.width) return rect;
+  const margin = 32;
+  const width = Math.min(window.innerWidth - margin * 2, 420, ((window.innerHeight - margin * 2) * 8.5) / 11);
+  const height = (width * 11) / 8.5;
+  return new DOMRect((window.innerWidth - width) / 2, (window.innerHeight - height) / 2, width, height);
 }
 
 // Only one rendered element may carry a view-transition name, so the create sheet's panel doesn't get one.
@@ -225,8 +239,7 @@ export function ShowPreviewButton({ children }: { children: ReactNode }) {
   const [closesInstantly, setClosesInstantly] = useState(false);
 
   useEffect(() => {
-    const breakpoint = getComputedStyle(document.documentElement).getPropertyValue("--breakpoint-preview") || "1024px";
-    const splitView = window.matchMedia(`(min-width: ${breakpoint})`);
+    const splitView = splitViewQuery();
     function closeForSplitView() {
       if (!splitView.matches) return;
       setClosesInstantly(true);

@@ -26,7 +26,10 @@ export type Invoice = {
   status: InvoiceStatus;
   paymentStatus: PaymentStatus;
   currency: string;
+  /** For drafts, the day it was created; replaced with the day it's sent. */
   issueDate: string;
+  /** ISO timestamp. */
+  createdAt: string;
   dueDate: string;
   paidDate?: string;
   memo: string;
@@ -85,6 +88,25 @@ export function invoiceAmounts(invoice: Invoice) {
   return { subtotalCents, discountCents, taxCents, totalCents: taxableCents + taxCents };
 }
 
+const easternClock = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  hourCycle: "h23",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  timeZoneName: "longOffset",
+});
+
+/** The current Eastern time of day on `today`, so new timestamps land on the company's calendar date. */
+export function nowOn(today: string, now = new Date()) {
+  const part = (date: Date, type: Intl.DateTimeFormatPartTypes) =>
+    easternClock.formatToParts(date).find((entry) => entry.type === type)!.value;
+  const time = `${part(now, "hour")}:${part(now, "minute")}:${part(now, "second")}`;
+  const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
+  const offset = part(new Date(`${today}T12:00:00Z`), "timeZoneName").replace("GMT", "") || "Z";
+  return new Date(`${today}T${time}.${milliseconds}${offset}`);
+}
+
 export function invoiceTotalCents(invoice: Invoice) {
   return invoiceAmounts(invoice).totalCents;
 }
@@ -100,7 +122,7 @@ export function markSent(invoice: Invoice, today: string): Invoice {
       ...invoice.activity,
       {
         id: `${invoice.invoiceNumber}-sent-${Date.now()}`,
-        timestamp: new Date().toISOString(),
+        timestamp: nowOn(today).toISOString(),
         actor: "You",
         action: "Sent the invoice to the customer",
       },
@@ -108,7 +130,7 @@ export function markSent(invoice: Invoice, today: string): Invoice {
   };
 }
 
-export function markVoided(invoice: Invoice): Invoice {
+export function markVoided(invoice: Invoice, today: string): Invoice {
   return {
     ...invoice,
     status: "Void",
@@ -117,7 +139,7 @@ export function markVoided(invoice: Invoice): Invoice {
       ...invoice.activity,
       {
         id: `${invoice.invoiceNumber}-voided-${Date.now()}`,
-        timestamp: new Date().toISOString(),
+        timestamp: nowOn(today).toISOString(),
         actor: "You",
         action: "Voided the invoice",
       },

@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/Button";
 import { InvoiceForm } from "@/components/invoice-form/InvoiceForm";
 import { InvoiceSheetPopup } from "@/components/InvoiceSheetLayout";
 import { SentInvoiceFlight, type Flight } from "@/components/SentInvoiceFlight";
 import type { Company, Invoice } from "@/lib/invoices";
-
 const { Root: DialogRoot, Trigger: DialogTrigger } = Dialog;
 
 type CreateInvoiceSheetProps = {
@@ -33,6 +32,20 @@ export function CreateInvoiceSheet({ company, today, onCreate }: CreateInvoiceSh
     setContinuing(true);
     setFormKey((key) => key + 1);
   }
+
+  useEffect(() => {
+    function openOnShortcut(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== "c" || event.repeat || event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+      const target = event.target as HTMLElement;
+      if (target.closest("input, textarea, select, [contenteditable]")) return;
+      if (document.querySelector("[role=dialog][data-open], [role=alertdialog][data-open]")) return;
+      event.preventDefault();
+      setOpen(true);
+    }
+    window.addEventListener("keydown", openOnShortcut);
+    return () => window.removeEventListener("keydown", openOnShortcut);
+  }, []);
 
   const closeAfterSend = useCallback(() => {
     sending.current = false;
@@ -62,7 +75,7 @@ export function CreateInvoiceSheet({ company, today, onCreate }: CreateInvoiceSh
         }
       }}
     >
-      <DialogTrigger render={<Button />}>Create Invoice</DialogTrigger>
+      <DialogTrigger render={<Button aria-keyshortcuts="c" />}>Create Invoice</DialogTrigger>
 
       {/* Stays mounted while closed so dismissing keeps what was typed; a successful submit resets it. */}
       <InvoiceSheetPopup keepMounted>

@@ -24,7 +24,7 @@ export const invoices = pgTable(
   },
   (table) => [
     // Matches the table's newest-first order, so each page and its cursor lookup is a single index range.
-    index("invoices_listing_idx").on(table.issueDate.desc(), table.invoiceNumber.desc(), table.id.desc()),
+    index("invoices_listing_idx").on(table.createdAt.desc(), table.invoiceNumber.desc(), table.id.desc()),
     index("invoices_payment_status_idx").on(table.paymentStatus),
   ],
   // Supabase serves public tables over its REST API to anyone holding the public key; with row-level security on and
@@ -37,6 +37,4 @@ export const company = pgTable("company", {
   name: text().notNull(),
   industry: text().notNull(),
   baseCurrency: text().notNull(),
-  // The demo runs on a fixed calendar so due dates read the same whenever it's opened.
-  asOfDate: date({ mode: "string" }).notNull(),
 }).enableRLS();

@@ -31,7 +31,6 @@ export function Switch({ checked, onCheckedChange, className, children }: Switch
           "group-hover/switch:bg-[color-mix(in_oklab,var(--color-stone-900)_15%,var(--color-surface))]",
           "transition-colors duration-150",
           "data-[checked]:bg-stone-900 data-[checked]:group-hover/switch:bg-stone-800",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900/40",
         )}
       >
         <BaseSwitch.Thumb

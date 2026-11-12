@@ -51,7 +51,7 @@ export function InvoiceDetailsSheet({
   const previewPane = useRef<HTMLDivElement>(null);
   const editForm = useRef<HTMLFormElement>(null);
 
-  // Without a page to animate from, the invoice is sent and the sheet closes straight away.
+  // Without a page to animate from, as with reduced motion, the invoice is sent and the sheet closes straight away.
   function flyOff(invoice: Invoice, page?: DOMRect) {
     if (!page || prefersReducedMotion()) {
       onSend(invoice);
@@ -66,7 +66,7 @@ export function InvoiceDetailsSheet({
     const page = previewPageRect(previewPane.current);
     onDelete(invoice);
     onOpenChange(false);
-    if (!page || prefersReducedMotion()) return;
+    if (prefersReducedMotion()) return;
     setSent(true);
     setShred({ id: invoice.id, invoice, rect: page });
   }
@@ -140,7 +140,7 @@ export function InvoiceDetailsSheet({
               inert={sent}
               onEdit={() => startEditing()}
               onSend={() => sendInvoice(invoice)}
-              onVoid={() => onVoid(markVoided(invoice))}
+              onVoid={() => onVoid(markVoided(invoice, today))}
               onClose={() => onOpenChange(false)}
               onDelete={() => deleteInvoice(invoice)}
             />

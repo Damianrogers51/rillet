@@ -9,6 +9,12 @@ export const shortDateFormat = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+/** The calendar day of a timestamp, in the same zone as the activity log. */
+export const timestampDateFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeZone: "America/New_York",
+});
+
 export const activityTimeFormat = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",

@@ -28,7 +28,9 @@ export function InvoicePreview({ invoice, company }: { invoice: Invoice; company
         <span className="mt-0.5 font-mono">{invoice.invoiceNumber}</span>
         <dl className="mt-12 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
           <dt className="text-tertiary">Issued</dt>
-          <dd className="font-[450] text-primary">{formatDate(invoice.issueDate)}</dd>
+          <dd className="font-[450] text-primary">
+            {invoice.status === "Draft" ? "—" : formatDate(invoice.issueDate)}
+          </dd>
           <dt className="text-tertiary">Due</dt>
           <dd className="font-[450] text-primary">{formatDate(invoice.dueDate)}</dd>{" "}
         </dl>

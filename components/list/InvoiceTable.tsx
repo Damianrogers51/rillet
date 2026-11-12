@@ -4,8 +4,8 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { CopyButton, copyPillClassName } from "@/components/CopyButton";
 import { InvoiceDetailsSheet } from "@/components/details/InvoiceDetailsSheet";
 import { StatusBadge } from "@/components/StatusBadge";
-import { dateFormat, daysUntil, formatMoney, pluralizeDays, shortDateFormat } from "@/lib/format";
-import { invoiceTotalCents, type Company, type Invoice } from "@/lib/invoices";
+import { dateFormat, daysUntil, formatMoney, pluralizeDays, shortDateFormat, timestampDateFormat } from "@/lib/format";
+import { invoiceTotalCents, nowOn, type Company, type Invoice } from "@/lib/invoices";
 import { twMerge } from "tailwind-merge";
 
 const MINUTE_MS = 60 * 1000;
@@ -36,21 +36,21 @@ function DueDate({ invoice, today }: { invoice: Invoice; today: string }) {
   return <span title={absolute}>{daysUntilDue === 0 ? "Due today" : `Due in ${pluralizeDays(daysUntilDue)}`}</span>;
 }
 
-// Invoices created within the last hour show how long ago, so new ones stand out from the issue dates around them.
-function IssuedDate({ invoice }: { invoice: Invoice }) {
-  const absolute = dateFormat.format(new Date(invoice.issueDate));
-  const createdAt = new Date(invoice.activity[0]?.timestamp ?? 0).getTime();
+// Invoices created within the last hour show how long ago, so new ones stand out from the dates around them.
+function CreatedDate({ invoice, today }: { invoice: Invoice; today: string }) {
+  const absolute = timestampDateFormat.format(new Date(invoice.createdAt));
+  const createdAt = new Date(invoice.createdAt).getTime();
   const [now, setNow] = useState<number | null>(null);
   const age = now === null ? Infinity : now - createdAt;
-  const recent = age < HOUR_MS;
+  const recent = age >= 0 && age < HOUR_MS;
 
   useEffect(() => {
-    const tick = () => setNow(Date.now());
+    const tick = () => setNow(nowOn(today).getTime());
     tick();
-    if (Date.now() - createdAt >= HOUR_MS) return;
+    if (nowOn(today).getTime() - createdAt >= HOUR_MS) return;
     const interval = setInterval(tick, 15_000);
     return () => clearInterval(interval);
-  }, [createdAt]);
+  }, [createdAt, today]);
 
   if (!recent) return <span>{absolute}</span>;
   const minutes = Math.floor(age / MINUTE_MS);
@@ -124,7 +124,7 @@ export function InvoiceTable({ invoices, company, today, onSave, onSend, onVoid,
                   <th className="py-3 pr-6">Customer</th>
                   <th className="py-3 pr-6">Invoice Number</th>
                   <th className="py-3 pr-6">Due</th>
-                  <th className="py-3 pr-4 text-right">Issued</th>
+                  <th className="py-3 pr-4 text-right">Created</th>
                 </tr>
               </thead>
 
@@ -186,7 +186,7 @@ export function InvoiceTable({ invoices, company, today, onSave, onSend, onVoid,
                       <DueDate invoice={invoice} today={today} />
                     </td>
                     <td className="py-2.5 pr-4 text-right whitespace-nowrap">
-                      <IssuedDate invoice={invoice} />
+                      <CreatedDate invoice={invoice} today={today} />
                     </td>
                   </tr>
                 ))}

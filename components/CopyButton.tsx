@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { twMerge } from "tailwind-merge";
+
+const iconFadeMs = 200;
 
 /** A pill that only shows on hover, padded outward so the value stays aligned with its neighbors. */
 export const copyPillClassName = twMerge(
@@ -24,13 +26,22 @@ export function CopyButton({
   iconClassName?: string;
   tabIndex?: number;
 }) {
-  const [copied, setCopied] = useState(false);
+  // "leaving" keeps the check while a hover-only icon fades out, so it doesn't swap back to the copy icon mid-fade.
+  const [phase, setPhase] = useState<"idle" | "copied" | "leaving">("idle");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const copied = phase !== "idle";
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   async function copy(event: MouseEvent) {
     event.stopPropagation();
     await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    timers.current.forEach(clearTimeout);
+    setPhase("copied");
+    timers.current = [
+      setTimeout(() => setPhase("leaving"), 1500),
+      setTimeout(() => setPhase("idle"), 1500 + iconFadeMs),
+    ];
   }
 
   return (
@@ -46,8 +57,11 @@ export function CopyButton({
         className={twMerge(
           "grid -translate-y-[0.5px]",
           "text-stone-500",
+          "transition-opacity duration-200 ease-out",
           "*:col-start-1 *:row-start-1 *:transition-[opacity,scale,filter] *:duration-200 *:ease-out",
           iconClassName,
+          // Overrides hover-only icons, so the check stays after the pointer leaves the row.
+          phase === "copied" && "opacity-100!",
         )}
       >
         <svg
