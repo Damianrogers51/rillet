@@ -25,6 +25,7 @@ const filters = [
   { value: "open", label: "Open", status: "Open" },
   { value: "overdue", label: "Overdue", status: "Overdue" },
   { value: "paid", label: "Paid", status: "Paid" },
+  { value: "void", label: "Void", status: "Voided" },
 ] as const satisfies { value: string; label: string; status: PaymentStatus | null }[];
 
 const pageButtonClassName = "flex size-8.5 items-center justify-center px-0";
