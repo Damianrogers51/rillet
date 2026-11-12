@@ -28,4 +28,6 @@ export const invoices = pgTable(
     index("invoices_listing_idx").on(table.issueDate.desc(), table.invoiceNumber.desc(), table.id.desc()),
     index("invoices_payment_status_idx").on(table.paymentStatus),
   ],
-);
+  // Supabase serves public tables over its REST API to anyone holding the public key; with row-level security on and
+  // no policies, only the app's own database connection can reach this one.
+).enableRLS();
