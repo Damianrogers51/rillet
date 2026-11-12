@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { twMerge } from "tailwind-merge";
+import { prefersReducedMotion } from "@/lib/motion";
 
 type ButtonProps = ComponentProps<"button"> & {
   variant?: "primary" | "secondary" | "tertiary";
@@ -18,10 +19,6 @@ const pressDuration = 110;
 const releaseDuration = 180;
 const presses = new WeakMap<HTMLElement, Animation>();
 
-function reducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 // The squish runs in script rather than on :active so a quick click still plays it in full, and so nothing that
 // changes under the button mid-click (the form going inert on send, a dialog opening) can cut it short.
 // Buttons inside a `data-press-group` element, like the halves of a split button, squish the whole group together.
@@ -30,7 +27,7 @@ function pressTarget(button: HTMLButtonElement) {
 }
 
 function press(button: HTMLButtonElement) {
-  if (reducedMotion()) return;
+  if (prefersReducedMotion()) return;
   const target = pressTarget(button);
   presses.get(target)?.cancel();
   presses.set(

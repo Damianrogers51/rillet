@@ -9,7 +9,6 @@ export const invoices = pgTable(
     customerName: text().notNull(),
     billingEmail: text().notNull(),
     billingAddress: text().notNull(),
-    paymentTerms: text().notNull(),
     status: text().$type<InvoiceStatus>().notNull(),
     paymentStatus: text().$type<PaymentStatus>().notNull(),
     currency: text().notNull(),
@@ -40,12 +39,4 @@ export const company = pgTable("company", {
   baseCurrency: text().notNull(),
   // The demo runs on a fixed calendar so due dates read the same whenever it's opened.
   asOfDate: date({ mode: "string" }).notNull(),
-}).enableRLS();
-
-/** Written invoice requests and the draft fields each should fill in, for testing request-to-draft generation. */
-export const invoicePromptExamples = pgTable("invoice_prompt_examples", {
-  id: text().primaryKey(),
-  label: text().notNull(),
-  input: text().notNull(),
-  expectedDraftFields: jsonb().$type<string[]>().notNull(),
 }).enableRLS();

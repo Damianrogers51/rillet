@@ -2,7 +2,7 @@ import "server-only";
 import { and, count, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core";
 import { invoices } from "@/lib/db/schema";
-import type { CreateInvoiceRequest, Customer, InvoiceCounts, InvoiceInput, InvoicePage } from "@/lib/invoice-api";
+import type { CreateInvoiceRequest, Customer, InvoiceCounts, InvoiceInput, InvoicePage } from "@/lib/api-types";
 import {
   currencies,
   invoiceNumberAfter,
@@ -11,7 +11,7 @@ import {
   type InvoiceActivity,
   type PaymentStatus,
 } from "@/lib/invoices";
-import { getDb } from "@/lib/server/db";
+import { getDb } from "@/lib/db/client";
 
 export type StoreResult<T> = { ok: true; value: T } | { ok: false; status: number; error: string };
 
@@ -127,7 +127,6 @@ export async function listCustomers(): Promise<Customer[]> {
       billingEmail: invoices.billingEmail,
       billingAddress: invoices.billingAddress,
       currency: invoices.currency,
-      paymentTerms: invoices.paymentTerms,
       issueDate: invoices.issueDate,
     })
     .from(invoices)
@@ -253,7 +252,7 @@ const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 /** Checks the shape of a request body; whether a draft is complete enough to send is checked when it's sent. */
 export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
   const value = (body ?? {}) as Record<string, unknown>;
-  const strings = ["customerName", "billingEmail", "billingAddress", "paymentTerms", "memo"] as const;
+  const strings = ["customerName", "billingEmail", "billingAddress", "memo"] as const;
   for (const key of strings) {
     if (typeof value[key] !== "string") return invalid(`${key} must be a string`);
   }
@@ -276,8 +275,7 @@ export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
       Number.isFinite(item.unitPrice),
   );
   if (!lineItemsValid) return invalid("Every line item needs an id, description, account code, quantity and price");
-  const { customerName, billingEmail, billingAddress, paymentTerms, memo, currency, issueDate, dueDate } =
-    value as InvoiceInput;
+  const { customerName, billingEmail, billingAddress, memo, currency, issueDate, dueDate } = value as InvoiceInput;
   const { taxRate, discount, lineItems } = value as InvoiceInput;
   return {
     ok: true,
@@ -285,7 +283,6 @@ export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
       customerName,
       billingEmail,
       billingAddress,
-      paymentTerms,
       memo,
       currency,
       issueDate,

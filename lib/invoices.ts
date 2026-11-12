@@ -23,7 +23,6 @@ export type Invoice = {
   customerName: string;
   billingEmail: string;
   billingAddress: string;
-  paymentTerms: string;
   status: InvoiceStatus;
   paymentStatus: PaymentStatus;
   currency: string;
@@ -42,16 +41,6 @@ export type Company = {
   industry: string;
   baseCurrency: string;
 };
-
-export const paymentTerms = {
-  "Due on receipt": 0,
-  "Net 15": 15,
-  "Net 30": 30,
-  "Net 45": 45,
-  "Net 60": 60,
-} as const;
-
-export type PaymentTerms = keyof typeof paymentTerms;
 
 export const currencies = ["USD", "CAD", "GBP", "EUR"] as const;
 

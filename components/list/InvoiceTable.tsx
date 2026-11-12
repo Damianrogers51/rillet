@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { CopyButton, copyPillClassName } from "@/components/CopyButton";
-import { InvoiceDetailsSheet } from "@/components/InvoiceDetailsSheet";
+import { InvoiceDetailsSheet } from "@/components/details/InvoiceDetailsSheet";
 import { StatusBadge } from "@/components/StatusBadge";
 import { dateFormat, daysUntil, formatMoney, pluralizeDays, shortDateFormat } from "@/lib/format";
 import { invoiceTotalCents, type Company, type Invoice } from "@/lib/invoices";

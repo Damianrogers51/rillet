@@ -30,11 +30,7 @@ export function InvoicePreview({ invoice, company }: { invoice: Invoice; company
           <dt className="text-tertiary">Issued</dt>
           <dd className="font-[450] text-primary">{formatDate(invoice.issueDate)}</dd>
           <dt className="text-tertiary">Due</dt>
-          <dd className="font-[450] text-primary">{formatDate(invoice.dueDate)}</dd>
-          {/* <dt className="text-tertiary">Terms</dt>
-          <dd className="font-[450] text-primary">
-            {invoice.paymentTerms}
-          </dd> */}
+          <dd className="font-[450] text-primary">{formatDate(invoice.dueDate)}</dd>{" "}
         </dl>
       </header>
 

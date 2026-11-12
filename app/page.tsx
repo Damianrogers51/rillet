@@ -1,8 +1,8 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { InvoicesView } from "@/components/InvoicesView";
-import { invoicePageSize } from "@/lib/invoice-api";
-import { getCompany } from "@/lib/server/company";
+import { InvoicesView } from "@/components/list/InvoicesView";
+import { invoicePageSize } from "@/lib/api-types";
+import { getCompany } from "@/lib/server/company-store";
 import { listInvoices } from "@/lib/server/invoice-store";
 
 export default function Home() {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ComponentProps } from "react";
+import { useState, type ComponentProps, type ReactNode, type Ref } from "react";
 import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
+import { Field } from "@base-ui/react/field";
 import { Input as BaseInput } from "@base-ui/react/input";
 import { Popover } from "@base-ui/react/popover";
 import { Select as BaseSelect } from "@base-ui/react/select";
@@ -347,5 +348,56 @@ function CheckIcon() {
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" aria-hidden className="size-3.5">
       <path d="m3.5 8.5 3 3 6-7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+type TextFieldProps = {
+  label: string;
+  name?: string;
+  className?: string;
+  ref?: Ref<HTMLDivElement>;
+  /** Shown below the field when it has no validation error of its own, like a character limit being reached. */
+  notice?: ReactNode;
+  children: ReactNode;
+};
+
+/** A labelled field that shows its most pressing validation problem underneath. */
+export function TextField({ label, name, className, ref, notice, children }: TextFieldProps) {
+  return (
+    <Field.Root ref={ref} name={name} className={twMerge("flex flex-col gap-1.5", className)}>
+      <Field.Label className="text-secondary">{label}</Field.Label>
+      {children}
+      <FieldMessage notice={notice} />
+    </Field.Root>
+  );
+}
+
+export const fieldMessageClassName = "border-x-[0.5px] border-transparent px-3.5 text-xs text-red-700";
+
+// Earlier entries win, so a field only ever shows its most pressing problem. The live limit notice sits between
+// hard errors and the softer decimal-places hint.
+const validityMessages: [keyof ValidityState, string][] = [
+  ["valueMissing", "This field can't be left empty"],
+  ["badInput", "Enter a number"],
+  ["typeMismatch", "Enter a valid email address"],
+  ["rangeUnderflow", "Can't be negative"],
+];
+
+function FieldMessage({ notice }: { notice?: ReactNode }) {
+  return (
+    <Field.Validity>
+      {({ validity }) => {
+        const message =
+          validityMessages.find(([key]) => validity[key])?.[1] ||
+          notice ||
+          (validity.stepMismatch && "Use up to 2 decimal places");
+        if (!message) return null;
+        return (
+          <Field.Error match className={twMerge(fieldMessageClassName, "motion-safe:animate-type-in")}>
+            {message}
+          </Field.Error>
+        );
+      }}
+    </Field.Validity>
   );
 }

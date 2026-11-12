@@ -10,16 +10,22 @@ export type FilterOption<Value extends string> = {
   count: number;
 };
 
-type InvoiceFiltersProps<Value extends string> = {
+type SegmentedFilterProps<Value extends string> = {
+  label: string;
   options: FilterOption<Value>[];
   value: Value;
   onChange: (value: Value) => void;
 };
 
-export function InvoiceFilters<Value extends string>({ options, value, onChange }: InvoiceFiltersProps<Value>) {
+export function SegmentedFilter<Value extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: SegmentedFilterProps<Value>) {
   return (
     <ToggleGroup
-      aria-label="Filter invoices"
+      aria-label={label}
       value={[value]}
       onValueChange={(groupValue) => {
         if (groupValue[0]) onChange(groupValue[0] as Value);

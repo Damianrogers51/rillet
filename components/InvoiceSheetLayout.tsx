@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode, type Ref } from "react";
+import { flushSync } from "react-dom";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/Button";
 import { PreviewPage } from "@/components/PreviewPage";
+import { prefersReducedMotion } from "@/lib/motion";
 import { twMerge } from "tailwind-merge";
 
 const {
@@ -187,6 +189,34 @@ export function PreviewPane({ ref, pageClassName, onDismiss, children }: Preview
       </PreviewPage>
     </div>
   );
+}
+
+/** Where the preview page sits on screen; undefined while the pane is hidden on narrow screens. */
+export function previewPageRect(pane: HTMLElement | null) {
+  const rect = pane?.firstElementChild?.getBoundingClientRect();
+  return rect?.width ? rect : undefined;
+}
+
+// Only one rendered element may carry a view-transition name, so the create sheet's panel doesn't get one.
+export const panelTransitionClassName = "[view-transition-name:invoice-panel]";
+
+/**
+ * Swaps the side panel with the old one sliding out as the new one slides in, in the given direction. `onSwapped` runs
+ * once the new panel is in place, since focus can't move into it while the transition is still running.
+ */
+export function swapPanel(direction: "forward" | "back", update: () => void, onSwapped?: () => void) {
+  if (!document.startViewTransition || prefersReducedMotion()) {
+    flushSync(update);
+    onSwapped?.();
+    return;
+  }
+  const root = document.documentElement;
+  root.dataset.panelSwap = direction;
+  const transition = document.startViewTransition(() => flushSync(update));
+  transition.finished.finally(() => {
+    delete root.dataset.panelSwap;
+    onSwapped?.();
+  });
 }
 
 /** Opens the preview in its own dialog on screens too narrow to show it beside the side panel. */

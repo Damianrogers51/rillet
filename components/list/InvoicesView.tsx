@@ -1,22 +1,21 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/Button";
-import { CreateInvoiceSheet } from "@/components/CreateInvoiceSheet";
-import { InvoiceFilters } from "@/components/InvoiceFilters";
-import { InvoiceTable } from "@/components/InvoiceTable";
-import { fetchInvoicePage, invoicePageSize, type InvoicePage } from "@/lib/invoice-api";
+import { CreateInvoiceSheet } from "@/components/invoice-form/CreateInvoiceSheet";
+import { SegmentedFilter } from "@/components/SegmentedFilter";
+import { InvoiceTable } from "@/components/list/InvoiceTable";
+import { invoicePageSize, type InvoicePage } from "@/lib/api-types";
 import type { Company, PaymentStatus } from "@/lib/invoices";
 import {
-  invoiceKeys,
   useCreateInvoice,
   useDeleteInvoice,
   useInvoicePage,
+  usePrefetchInvoicePage,
   useSaveInvoice,
   useSendInvoice,
   useVoidInvoice,
-} from "@/lib/queries";
+} from "@/hooks/queries";
 
 const filters = [
   { value: "all", label: "All", status: null },
@@ -35,7 +34,6 @@ type InvoicesViewProps = {
 };
 
 export function InvoicesView({ initialPage, company, today }: InvoicesViewProps) {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterValue>("all");
   // The cursor for each page visited so far; Previous steps back through them.
   const [cursors, setCursors] = useState<(string | null)[]>([null]);
@@ -52,13 +50,7 @@ export function InvoicesView({ initialPage, company, today }: InvoicesViewProps)
   if (page && !isPlaceholderData && page.invoices.length === 0 && pageIndex > 0) setCursors(cursors.slice(0, -1));
 
   const nextCursor = isPlaceholderData ? null : (page?.nextCursor ?? null);
-  useEffect(() => {
-    if (!nextCursor) return;
-    queryClient.prefetchQuery({
-      queryKey: invoiceKeys.list(status, nextCursor),
-      queryFn: ({ signal }) => fetchInvoicePage({ status, cursor: nextCursor }, signal),
-    });
-  }, [queryClient, status, nextCursor]);
+  usePrefetchInvoicePage(status, nextCursor);
 
   const createInvoice = useCreateInvoice();
   const saveInvoice = useSaveInvoice();
@@ -82,7 +74,8 @@ export function InvoicesView({ initialPage, company, today }: InvoicesViewProps)
         </div>
       </div>
 
-      <InvoiceFilters
+      <SegmentedFilter
+        label="Filter invoices"
         value={filter}
         onChange={(value) => {
           setFilter(value);

@@ -1,7 +1,7 @@
 import "server-only";
 import { company } from "@/lib/db/schema";
 import type { Company } from "@/lib/invoices";
-import { getDb } from "@/lib/server/db";
+import { getDb } from "@/lib/db/client";
 
 /** The business sending the invoices, and the date the app treats as today. */
 export async function getCompany(): Promise<{ company: Company; today: string }> {

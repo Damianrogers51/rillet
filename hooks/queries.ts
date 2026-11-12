@@ -1,18 +1,102 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import {
-  deleteInvoiceRequest,
-  fetchCustomers,
-  fetchInvoicePage,
-  fetchNextInvoiceNumber,
-  invoiceInput,
-  postInvoice,
-  postSendInvoice,
-  postVoidInvoice,
-  putInvoice,
+  invoicePageSize,
+  type ActivityRequest,
+  type CreateInvoiceRequest,
+  type Customer,
   type InvoiceCounts,
+  type InvoiceInput,
   type InvoicePage,
-} from "@/lib/invoice-api";
+} from "@/lib/api-types";
 import type { Invoice, PaymentStatus } from "@/lib/invoices";
+
+function invoiceInput(invoice: Invoice): InvoiceInput {
+  const {
+    customerName,
+    billingEmail,
+    billingAddress,
+    currency,
+    issueDate,
+    dueDate,
+    memo,
+    taxRate,
+    discount,
+    lineItems,
+  } = invoice;
+  return {
+    customerName,
+    billingEmail,
+    billingAddress,
+    currency,
+    issueDate,
+    dueDate,
+    memo,
+    taxRate,
+    discount,
+    lineItems,
+  };
+}
+
+class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    headers: init?.body ? { "Content-Type": "application/json", ...init.headers } : init?.headers,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(body?.error ?? response.statusText, response.status);
+  }
+  return response.status === 204 ? (undefined as T) : response.json();
+}
+
+function fetchInvoicePage(
+  { status, cursor }: { status: PaymentStatus | null; cursor: string | null },
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams({ limit: String(invoicePageSize) });
+  if (status) params.set("status", status);
+  if (cursor) params.set("cursor", cursor);
+  return request<InvoicePage>(`/api/invoices?${params}`, { signal });
+}
+
+function fetchCustomers(signal?: AbortSignal) {
+  return request<Customer[]>("/api/customers", { signal });
+}
+
+function fetchNextInvoiceNumber(issueDate: string, signal?: AbortSignal) {
+  return request<{ invoiceNumber: string }>(`/api/invoices/next-number?issueDate=${issueDate}`, { signal });
+}
+
+function postInvoice(body: CreateInvoiceRequest) {
+  return request<Invoice>("/api/invoices", { method: "POST", body: JSON.stringify(body) });
+}
+
+function putInvoice(id: string, body: InvoiceInput & ActivityRequest) {
+  return request<Invoice>(`/api/invoices/${id}`, { method: "PUT", body: JSON.stringify(body) });
+}
+
+/** Sends a draft, saving any edits made alongside it first. */
+function postSendInvoice(id: string, body: ActivityRequest & { input?: InvoiceInput }) {
+  return request<Invoice>(`/api/invoices/${id}/send`, { method: "POST", body: JSON.stringify(body) });
+}
+
+function postVoidInvoice(id: string, body: ActivityRequest) {
+  return request<Invoice>(`/api/invoices/${id}/void`, { method: "POST", body: JSON.stringify(body) });
+}
+
+function deleteInvoiceRequest(id: string) {
+  return request<void>(`/api/invoices/${id}`, { method: "DELETE" });
+}
 
 export const invoiceKeys = {
   all: ["invoices"] as const,
@@ -32,6 +116,18 @@ export function useInvoicePage(status: PaymentStatus | null, cursor: string | nu
     placeholderData: keepPreviousData,
     initialData: initialPage,
   });
+}
+
+/** Loads the page after the current one in the background, so Next shows it straight away. */
+export function usePrefetchInvoicePage(status: PaymentStatus | null, cursor: string | null) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!cursor) return;
+    queryClient.prefetchQuery({
+      queryKey: invoiceKeys.list(status, cursor),
+      queryFn: ({ signal }) => fetchInvoicePage({ status, cursor }, signal),
+    });
+  }, [queryClient, status, cursor]);
 }
 
 export function useCustomers() {
