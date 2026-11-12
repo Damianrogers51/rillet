@@ -1,0 +1,251 @@
+{
+  "company": {
+    "name": "Northstar Metrics",
+    "industry": "B2B SaaS",
+    "baseCurrency": "USD"
+  },
+  "currentDate": "2026-05-04",
+  "invoices": [
+    {
+      "id": "inv-2026-0412",
+      "invoiceNumber": "INV-2026-0412",
+      "customerName": "Acme Labs",
+      "billingEmail": "ap@acmelabs.example",
+      "billingAddress": "415 Market Street, San Francisco, CA 94105",
+      "paymentTerms": "Net 30",
+      "status": "Sent",
+      "paymentStatus": "Open",
+      "currency": "USD",
+      "issueDate": "2026-04-28",
+      "dueDate": "2026-05-28",
+      "memo": "April platform subscription and usage overage.",
+      "taxRate": 0.085,
+      "discount": 0,
+      "lineItems": [
+        {
+          "id": "li-1",
+          "description": "Platform subscription",
+          "quantity": 1,
+          "unitPrice": 12000,
+          "accountCode": "4000"
+        },
+        {
+          "id": "li-2",
+          "description": "Usage overage: event volume",
+          "quantity": 1480000,
+          "unitPrice": 0.012,
+          "accountCode": "4010"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-1",
+          "timestamp": "2026-04-28T10:14:00-04:00",
+          "actor": "Maya Chen",
+          "action": "Created invoice"
+        },
+        {
+          "id": "act-2",
+          "timestamp": "2026-04-28T10:22:00-04:00",
+          "actor": "Maya Chen",
+          "action": "Sent invoice to customer"
+        }
+      ]
+    },
+    {
+      "id": "inv-2026-0413",
+      "invoiceNumber": "INV-2026-0413",
+      "customerName": "Brightline Health",
+      "billingEmail": "finance@brightline.example",
+      "billingAddress": "18 Boylston Street, Boston, MA 02116",
+      "paymentTerms": "Net 15",
+      "status": "Draft",
+      "paymentStatus": "Unsent",
+      "currency": "USD",
+      "issueDate": "2026-05-01",
+      "dueDate": "2026-05-16",
+      "memo": "Implementation services milestone 2.",
+      "taxRate": 0,
+      "discount": 1000,
+      "lineItems": [
+        {
+          "id": "li-3",
+          "description": "Implementation services",
+          "quantity": 40,
+          "unitPrice": 275,
+          "accountCode": "4100"
+        },
+        {
+          "id": "li-4",
+          "description": "Data migration support",
+          "quantity": 12,
+          "unitPrice": 225,
+          "accountCode": "4100"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-3",
+          "timestamp": "2026-05-01T14:32:00-04:00",
+          "actor": "Jordan Lee",
+          "action": "Created draft invoice"
+        }
+      ]
+    },
+    {
+      "id": "inv-2026-0408",
+      "invoiceNumber": "INV-2026-0408",
+      "customerName": "Juniper Supply Co.",
+      "billingEmail": "invoices@junipersupply.example",
+      "billingAddress": "220 King Street W, Toronto, ON M5V 3M2",
+      "paymentTerms": "Due on receipt",
+      "status": "Sent",
+      "paymentStatus": "Overdue",
+      "currency": "CAD",
+      "issueDate": "2026-04-10",
+      "dueDate": "2026-04-10",
+      "memo": "One-time advisory package.",
+      "taxRate": 0.13,
+      "discount": 0,
+      "lineItems": [
+        {
+          "id": "li-5",
+          "description": "Revenue operations advisory",
+          "quantity": 1,
+          "unitPrice": 8500,
+          "accountCode": "4200"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-4",
+          "timestamp": "2026-04-10T09:01:00-04:00",
+          "actor": "Priya Raman",
+          "action": "Created invoice"
+        },
+        {
+          "id": "act-5",
+          "timestamp": "2026-04-10T09:04:00-04:00",
+          "actor": "Priya Raman",
+          "action": "Sent invoice to customer"
+        },
+        {
+          "id": "act-6",
+          "timestamp": "2026-05-01T08:00:00-04:00",
+          "actor": "Rillet automation",
+          "action": "Marked invoice overdue"
+        }
+      ]
+    },
+    {
+      "id": "inv-2026-0399",
+      "invoiceNumber": "INV-2026-0399",
+      "customerName": "Northwind Analytics",
+      "billingEmail": "billing@northwind.example",
+      "billingAddress": "9 Appold Street, London EC2A 2AP",
+      "paymentTerms": "Net 45",
+      "status": "Paid",
+      "paymentStatus": "Paid",
+      "currency": "GBP",
+      "issueDate": "2026-04-01",
+      "dueDate": "2026-05-16",
+      "paidDate": "2026-04-24",
+      "memo": "Annual renewal for analytics workspace.",
+      "taxRate": 0.2,
+      "discount": 2500,
+      "lineItems": [
+        {
+          "id": "li-6",
+          "description": "Annual analytics workspace",
+          "quantity": 1,
+          "unitPrice": 48000,
+          "accountCode": "4000"
+        },
+        {
+          "id": "li-7",
+          "description": "Premium support",
+          "quantity": 1,
+          "unitPrice": 6000,
+          "accountCode": "4300"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-7",
+          "timestamp": "2026-04-01T11:18:00-04:00",
+          "actor": "Sam Rivera",
+          "action": "Created invoice"
+        },
+        {
+          "id": "act-8",
+          "timestamp": "2026-04-24T16:10:00-04:00",
+          "actor": "Rillet automation",
+          "action": "Matched payment to invoice"
+        }
+      ]
+    },
+    {
+      "id": "inv-2026-0414",
+      "invoiceNumber": "INV-2026-0414",
+      "customerName": "Acme Labs",
+      "billingEmail": "ap@acmelabs.example",
+      "billingAddress": "415 Market Street, San Francisco, CA 94105",
+      "paymentTerms": "Net 30",
+      "status": "Void",
+      "paymentStatus": "Voided",
+      "currency": "USD",
+      "issueDate": "2026-05-02",
+      "dueDate": "2026-06-01",
+      "memo": "Duplicate draft replaced by INV-2026-0412.",
+      "taxRate": 0.085,
+      "discount": 0,
+      "lineItems": [
+        {
+          "id": "li-8",
+          "description": "Duplicate usage overage draft",
+          "quantity": 1,
+          "unitPrice": 17880,
+          "accountCode": "4010"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-9",
+          "timestamp": "2026-05-02T12:40:00-04:00",
+          "actor": "Rillet automation",
+          "action": "Created invoice from imported billing instruction"
+        },
+        {
+          "id": "act-10",
+          "timestamp": "2026-05-02T12:52:00-04:00",
+          "actor": "Maya Chen",
+          "action": "Voided duplicate invoice"
+        }
+      ]
+    }
+  ],
+  "bonusLlmExamples": [
+    {
+      "id": "prompt-1",
+      "label": "Usage billing request",
+      "input": "Please invoice Acme Labs for April. Standard platform subscription is $12,000. They had 1,480,000 billable events at $0.012 each. Use Net 30 terms and add a memo that this covers April platform subscription and usage overage.",
+      "expectedDraftFields": [
+        "customerName",
+        "lineItems",
+        "dueDate",
+        "memo"
+      ]
+    },
+    {
+      "id": "prompt-2",
+      "label": "Incomplete services request",
+      "input": "Create an invoice for Brightline Health for implementation work. 40 hours at $275/hr and 12 hours of migration support at $225/hr. Apply the usual services discount. I am not sure whether tax applies.",
+      "expectedDraftFields": [
+        "customerName",
+        "lineItems",
+        "discount",
+        "needsReview"
+      ]
+    }
+  ]
+}
