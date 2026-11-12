@@ -125,6 +125,7 @@ export function InvoiceForm({
   // Remounting the form clears errors left by a send attempt that a draft doesn't need, then only the customer is
   // checked again when it's missing.
   const [errorReset, setErrorReset] = useState({ count: 0, checkCustomer: false });
+  const [attempt, setAttempt] = useState<"draft" | "send">("send");
   useEffect(() => {
     if (!errorReset.checkCustomer) return;
     formActions.current?.validate("customerName");
@@ -231,6 +232,7 @@ export function InvoiceForm({
   function canSaveDraft() {
     if (blockNegativeSubtotal()) return false;
     const valid = Boolean(customerName.trim());
+    setAttempt("draft");
     setCheckedItemFields(new Set());
     setErrorReset((reset) => ({ count: reset.count + 1, checkCustomer: !valid }));
     return valid;
@@ -313,6 +315,7 @@ export function InvoiceForm({
               name="customerName"
               label="Name"
               notice={characterLimitNotice(customerName, invoiceLimits.customerName)}
+              requiredMessage={`Customer name is required to ${attempt === "draft" ? "save a draft" : "send this invoice"}`}
             >
               <Autocomplete
                 required
@@ -324,7 +327,11 @@ export function InvoiceForm({
               />
             </TextField>
 
-            <TextField label="Billing email" notice={characterLimitNotice(billingEmail, invoiceLimits.billingEmail)}>
+            <TextField
+              label="Billing email"
+              notice={characterLimitNotice(billingEmail, invoiceLimits.billingEmail)}
+              requiredMessage="Billing email is required to send this invoice"
+            >
               <Input
                 required
                 type="email"
@@ -421,7 +428,13 @@ export function InvoiceForm({
               </Button>
             </>
           )}
-          <Button type="submit" onClick={() => setCheckedItemFields(allItemFieldKeys(lineItems))}>
+          <Button
+            type="submit"
+            onClick={() => {
+              setAttempt("send");
+              setCheckedItemFields(allItemFieldKeys(lineItems));
+            }}
+          >
             Send Invoice
           </Button>
         </footer>

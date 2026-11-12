@@ -364,16 +364,18 @@ type TextFieldProps = {
   ref?: Ref<HTMLDivElement>;
   /** Shown below the field when it has no validation error of its own, like a character limit being reached. */
   notice?: ReactNode;
+  /** Replaces the generic message shown when a required field is empty. */
+  requiredMessage?: string;
   children: ReactNode;
 };
 
 /** A labelled field that shows its most pressing validation problem underneath. */
-export function TextField({ label, name, className, ref, notice, children }: TextFieldProps) {
+export function TextField({ label, name, className, ref, notice, requiredMessage, children }: TextFieldProps) {
   return (
     <Field.Root ref={ref} name={name} className={twMerge("flex flex-col gap-1.5", className)}>
       <Field.Label className="text-secondary">{label}</Field.Label>
       {children}
-      <FieldMessage notice={notice} />
+      <FieldMessage notice={notice} requiredMessage={requiredMessage} />
     </Field.Root>
   );
 }
@@ -398,11 +400,12 @@ const validityMessages: [keyof ValidityState, string][] = [
   ["rangeUnderflow", "Can't be negative"],
 ];
 
-function FieldMessage({ notice }: { notice?: ReactNode }) {
+function FieldMessage({ notice, requiredMessage }: { notice?: ReactNode; requiredMessage?: string }) {
   return (
     <Field.Validity>
       {({ validity }) => {
         const message =
+          (validity.valueMissing && requiredMessage) ||
           validityMessages.find(([key]) => validity[key])?.[1] ||
           notice ||
           (validity.stepMismatch && "Use up to 2 decimal places");

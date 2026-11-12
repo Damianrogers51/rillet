@@ -235,7 +235,7 @@ function lineItemsProblem(items: LineItemDraft[], checkedItemFields: ReadonlySet
     .map((field) => lineItemFieldNames[field]);
   if (missing.length) {
     const fields = missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0];
-    return `${capitalize(fields)} can't be left empty`;
+    return `${capitalize(fields)} ${missing.length > 1 ? "are" : "is"} required to send this invoice`;
   }
   if (subtotalCents < 0) return "Negative prices can't bring the subtotal below zero";
   if (items.some((item) => item.description.length >= invoiceLimits.description))
