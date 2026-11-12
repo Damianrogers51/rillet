@@ -122,6 +122,14 @@ export function InvoiceForm({
     setCheckedItemFields(new Set());
     setAddedItemId(null);
   }
+  // Remounting the form clears errors left by a send attempt that a draft doesn't need, then only the customer is
+  // checked again when it's missing.
+  const [errorReset, setErrorReset] = useState({ count: 0, checkCustomer: false });
+  useEffect(() => {
+    if (!errorReset.checkCustomer) return;
+    formActions.current?.validate("customerName");
+    customerNameField.current?.querySelector("input")?.focus();
+  }, [errorReset]);
   const [discountPercent, setDiscountPercent] = useState(() => (editing ? discountPercentOf(editing) : ""));
   const [taxPercent, setTaxPercent] = useState(editing?.taxRate ? String(+(editing.taxRate * 100).toFixed(4)) : "");
   const [memo, setMemo] = useState(editing?.memo ?? "");
@@ -222,10 +230,10 @@ export function InvoiceForm({
   // A draft only needs a customer to be found again; everything else is checked when it's sent.
   function canSaveDraft() {
     if (blockNegativeSubtotal()) return false;
-    if (customerName.trim()) return true;
-    formActions.current?.validate("customerName");
-    customerNameField.current?.querySelector("input")?.focus();
-    return false;
+    const valid = Boolean(customerName.trim());
+    setCheckedItemFields(new Set());
+    setErrorReset((reset) => ({ count: reset.count + 1, checkCustomer: !valid }));
+    return valid;
   }
 
   function submitAnimated(invoice: Invoice) {
@@ -275,7 +283,7 @@ export function InvoiceForm({
       {/* Remounting on close clears Base UI's field validity while the values above persist. */}
       <Form
         ref={ref}
-        key={validationKey}
+        key={`${validationKey}-${errorReset.count}`}
         className={twMerge(sidePanelClassName, className)}
         // Nothing in the form can change once the invoice is on its way.
         inert={sent}
