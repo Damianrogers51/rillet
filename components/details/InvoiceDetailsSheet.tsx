@@ -76,7 +76,7 @@ export function InvoiceDetailsSheet({
       startEditing(true);
       return;
     }
-    flyOff(markSent(draft), previewPageRect(previewPane.current));
+    flyOff(markSent(draft, today), previewPageRect(previewPane.current));
   }
 
   function startEditing(missingFields = false) {

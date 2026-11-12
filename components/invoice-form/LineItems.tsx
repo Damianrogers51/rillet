@@ -3,10 +3,9 @@
 import { memo, type FocusEvent } from "react";
 import { Field } from "@base-ui/react/field";
 import { twMerge } from "tailwind-merge";
-import { Input, fieldMessageClassName } from "@/components/Input";
-import { exceeds, limits } from "@/components/invoice-form/limits";
+import { Input, exceeds, fieldMessageClassName } from "@/components/Input";
 import { currencySymbol, formatDecimalInput, trimZeroDecimals } from "@/lib/format";
-import type { LineItem } from "@/lib/invoices";
+import { invoiceLimits, type LineItem } from "@/lib/invoices";
 
 export type LineItemDraft = {
   id: string;
@@ -24,8 +23,8 @@ export function toLineItem(draft: LineItemDraft): LineItem {
     item = {
       id: draft.id,
       description: draft.description.trim(),
-      quantity: Math.min(Number(draft.quantity) || 0, limits.quantity),
-      unitPrice: Math.max(Math.min(Number(draft.unitPrice) || 0, limits.unitPrice), -limits.unitPrice),
+      quantity: Math.min(Number(draft.quantity) || 0, invoiceLimits.quantity),
+      unitPrice: Math.max(Math.min(Number(draft.unitPrice) || 0, invoiceLimits.unitPrice), -invoiceLimits.unitPrice),
       accountCode: "",
     };
     lineItemCache.set(draft, item);
@@ -166,7 +165,7 @@ const LineItemRow = memo(function LineItemRow({
           required
           autoFocus={autoFocus}
           aria-label={`Description for ${position}`}
-          maxLength={limits.description}
+          maxLength={invoiceLimits.description}
           placeholder={descriptionPlaceholders[index % descriptionPlaceholders.length]}
           value={item.description}
           onChange={(event) => onChange(item.id, { description: event.target.value })}
@@ -178,7 +177,7 @@ const LineItemRow = memo(function LineItemRow({
           aria-label={`Quantity for ${position}`}
           type="number"
           min={0}
-          max={limits.quantity}
+          max={invoiceLimits.quantity}
           step="any"
           inputMode="decimal"
           {...decimalProps("quantity", 1)}
@@ -197,8 +196,8 @@ const LineItemRow = memo(function LineItemRow({
           required
           aria-label={`Unit price for ${position}`}
           type="number"
-          min={-limits.unitPrice}
-          max={limits.unitPrice}
+          min={-invoiceLimits.unitPrice}
+          max={invoiceLimits.unitPrice}
           step="any"
           inputMode="decimal"
           placeholder="0.00"
@@ -239,11 +238,11 @@ function lineItemsProblem(items: LineItemDraft[], checkedItemFields: ReadonlySet
     return `${capitalize(fields)} can't be left empty`;
   }
   if (subtotalCents < 0) return "Negative prices can't bring the subtotal below zero";
-  if (items.some((item) => item.description.length >= limits.description))
-    return `Description limit is ${limits.description.toLocaleString("en-US")} characters`;
-  if (items.some((item) => exceeds(item.quantity, limits.quantity)))
-    return `Quantity max is ${limits.quantity.toLocaleString("en-US")}`;
-  if (items.some((item) => Math.abs(Number(item.unitPrice)) > limits.unitPrice))
-    return `Unit price must be within ±${limits.unitPrice.toLocaleString("en-US")}`;
+  if (items.some((item) => item.description.length >= invoiceLimits.description))
+    return `Description limit is ${invoiceLimits.description.toLocaleString("en-US")} characters`;
+  if (items.some((item) => exceeds(item.quantity, invoiceLimits.quantity)))
+    return `Quantity max is ${invoiceLimits.quantity.toLocaleString("en-US")}`;
+  if (items.some((item) => Math.abs(Number(item.unitPrice)) > invoiceLimits.unitPrice))
+    return `Unit price must be within ±${invoiceLimits.unitPrice.toLocaleString("en-US")}`;
   return null;
 }

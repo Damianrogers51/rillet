@@ -44,6 +44,20 @@ export type Company = {
 
 export const currencies = ["USD", "CAD", "GBP", "EUR"] as const;
 
+/** Enforced by the form as you type and by the API on every write. */
+export const invoiceLimits = {
+  customerName: 100,
+  // RFC 5321 caps an address at 254 characters.
+  billingEmail: 254,
+  billingAddress: 200,
+  description: 200,
+  quantity: 1_000_000,
+  unitPrice: 10_000_000,
+  discountPercent: 100,
+  taxPercent: 100,
+  memo: 500,
+};
+
 export function addDays(isoDate: string, days: number) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
@@ -75,9 +89,11 @@ export function invoiceTotalCents(invoice: Invoice) {
   return invoiceAmounts(invoice).totalCents;
 }
 
-export function markSent(invoice: Invoice): Invoice {
+/** A draft's issue date is when it was created until it's sent; sending issues it on `today`. */
+export function markSent(invoice: Invoice, today: string): Invoice {
   return {
     ...invoice,
+    issueDate: today,
     status: "Sent",
     paymentStatus: "Open",
     activity: [

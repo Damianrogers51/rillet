@@ -106,7 +106,7 @@ export function InvoiceDetails({
             <DetailRow label="Customer">{invoice.customerName || emptyValue}</DetailRow>
             <DetailRow label="Billing email">{invoice.billingEmail || emptyValue}</DetailRow>
             <DetailRow label="Billing address">{invoice.billingAddress || emptyValue}</DetailRow>
-            <DetailRow label="Issued">{dateFormat.format(new Date(invoice.issueDate))}</DetailRow>
+            <DetailRow label={draft ? "Created" : "Issued"}>{dateFormat.format(new Date(invoice.issueDate))}</DetailRow>
             <DetailRow label="Due">{dateFormat.format(new Date(invoice.dueDate))}</DetailRow>
             {invoice.paidDate && <DetailRow label="Paid">{dateFormat.format(new Date(invoice.paidDate))}</DetailRow>}
             <DetailRow label="Memo">{invoice.memo || emptyValue}</DetailRow>

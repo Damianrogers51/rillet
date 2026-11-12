@@ -372,6 +372,15 @@ export function TextField({ label, name, className, ref, notice, children }: Tex
   );
 }
 
+export function exceeds(value: string, max: number) {
+  return value !== "" && Number(value) > max;
+}
+
+export const characterLimitNotice = (value: string, max: number) =>
+  value.length >= max ? `Limit is ${max.toLocaleString("en-US")} characters` : null;
+
+export const numberLimitNotice = (max: number, unit = "") => `Max is ${max.toLocaleString("en-US")}${unit}`;
+
 export const fieldMessageClassName = "border-x-[0.5px] border-transparent px-3.5 text-xs text-red-700";
 
 // Earlier entries win, so a field only ever shows its most pressing problem. The live limit notice sits between

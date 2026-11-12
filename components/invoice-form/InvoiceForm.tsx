@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { Form } from "@base-ui/react/form";
-import { Autocomplete, DatePicker, Input, Select, TextField, Textarea } from "@/components/Input";
+import {
+  Autocomplete,
+  DatePicker,
+  Input,
+  Select,
+  TextField,
+  Textarea,
+  characterLimitNotice,
+  exceeds,
+  numberLimitNotice,
+} from "@/components/Input";
 import { Button } from "@/components/Button";
 import { InvoicePreview } from "@/components/InvoicePreview";
 import {
@@ -27,11 +37,11 @@ import {
   toLineItemDraft,
   type LineItemDraft,
 } from "@/components/invoice-form/LineItems";
-import { characterLimitNotice, exceeds, limits, numberLimitNotice } from "@/components/invoice-form/limits";
 import {
   addDays,
   currencies,
   invoiceAmounts,
+  invoiceLimits,
   lineItemAmountCents,
   markSent,
   type Company,
@@ -92,7 +102,6 @@ export function InvoiceForm({
   const [billingEmail, setBillingEmail] = useState(editing?.billingEmail ?? "");
   const [billingAddress, setBillingAddress] = useState(editing?.billingAddress ?? "");
   const [currency, setCurrency] = useState<string>(editing?.currency ?? company.baseCurrency);
-  const issueDate = editing?.issueDate ?? today;
   const [dueDate, setDueDate] = useState(editing?.dueDate ?? addDays(today, 30));
   const [lineItems, setLineItems] = useState<LineItemDraft[]>(() =>
     editing?.lineItems.length ? editing.lineItems.map(toLineItemDraft) : [emptyLineItem()],
@@ -149,7 +158,7 @@ export function InvoiceForm({
     setLineItems((items) => items.filter((item) => item.id !== id));
   }, []);
 
-  const { data: nextInvoiceNumber = "" } = useNextInvoiceNumber(issueDate, !editing);
+  const { data: nextInvoiceNumber = "" } = useNextInvoiceNumber(today, !editing);
   const invoiceNumber = editing?.invoiceNumber ?? nextInvoiceNumber;
 
   function buildInvoice(send = false): Invoice {
@@ -166,10 +175,11 @@ export function InvoiceForm({
       currency,
       dueDate,
       memo: memo.trim(),
-      taxRate: Math.min(Number(taxPercent) || 0, limits.taxPercent) / 100,
+      taxRate: Math.min(Number(taxPercent) || 0, invoiceLimits.taxPercent) / 100,
       // Stored as an amount so existing invoices and totals keep working; rounded to the cent.
       discount:
-        Math.round((discountableCents * Math.min(Number(discountPercent) || 0, limits.discountPercent)) / 100) / 100,
+        Math.round((discountableCents * Math.min(Number(discountPercent) || 0, invoiceLimits.discountPercent)) / 100) /
+        100,
       lineItems: items,
     };
     if (editing) return { ...editing, ...details };
@@ -179,7 +189,7 @@ export function InvoiceForm({
       ...details,
       status: send ? "Sent" : "Draft",
       paymentStatus: send ? "Open" : "Unsent",
-      issueDate,
+      issueDate: today,
       activity: [
         {
           id: `${invoiceNumber}-created`,
@@ -272,7 +282,7 @@ export function InvoiceForm({
         onSubmit={(event) => {
           event.preventDefault();
           if (blockNegativeSubtotal()) return;
-          submitAnimated(editing ? markSent(buildEdited(editing)) : buildInvoice(true));
+          submitAnimated(editing ? markSent(buildEdited(editing), today) : buildInvoice(true));
         }}
       >
         <SidePanelHeader
@@ -293,11 +303,11 @@ export function InvoiceForm({
               ref={customerNameField}
               name="customerName"
               label="Name"
-              notice={characterLimitNotice(customerName, limits.customerName)}
+              notice={characterLimitNotice(customerName, invoiceLimits.customerName)}
             >
               <Autocomplete
                 required
-                maxLength={limits.customerName}
+                maxLength={invoiceLimits.customerName}
                 placeholder="Acme Labs"
                 value={customerName}
                 suggestions={[...knownCustomers.keys()]}
@@ -305,20 +315,23 @@ export function InvoiceForm({
               />
             </TextField>
 
-            <TextField label="Billing email" notice={characterLimitNotice(billingEmail, limits.billingEmail)}>
+            <TextField label="Billing email" notice={characterLimitNotice(billingEmail, invoiceLimits.billingEmail)}>
               <Input
                 required
                 type="email"
-                maxLength={limits.billingEmail}
+                maxLength={invoiceLimits.billingEmail}
                 placeholder="ap@acmelabs.example"
                 value={billingEmail}
                 onChange={(event) => setBillingEmail(event.target.value)}
               />
             </TextField>
 
-            <TextField label="Billing address" notice={characterLimitNotice(billingAddress, limits.billingAddress)}>
+            <TextField
+              label="Billing address"
+              notice={characterLimitNotice(billingAddress, invoiceLimits.billingAddress)}
+            >
               <Input
-                maxLength={limits.billingAddress}
+                maxLength={invoiceLimits.billingAddress}
                 placeholder="415 Market Street, San Francisco, CA 94105"
                 value={billingAddress}
                 onChange={(event) => setBillingAddress(event.target.value)}
@@ -328,7 +341,7 @@ export function InvoiceForm({
 
           <Section title="Payment">
             <Select label="Currency" value={currency} options={[...currencies]} onChange={setCurrency} />
-            <DatePicker label="Due date" value={dueDate} min={issueDate} onChange={setDueDate} />
+            <DatePicker label="Due date" value={dueDate} min={today} onChange={setDueDate} />
           </Section>
 
           <Section
@@ -361,16 +374,21 @@ export function InvoiceForm({
             <div className="grid grid-cols-2 gap-3">
               <PercentField
                 label="Discount"
-                max={limits.discountPercent}
+                max={invoiceLimits.discountPercent}
                 value={discountPercent}
                 onChange={setDiscountPercent}
               />
-              <PercentField label="Tax rate" max={limits.taxPercent} value={taxPercent} onChange={setTaxPercent} />
+              <PercentField
+                label="Tax rate"
+                max={invoiceLimits.taxPercent}
+                value={taxPercent}
+                onChange={setTaxPercent}
+              />
             </div>
 
-            <TextField label="Memo" notice={characterLimitNotice(memo, limits.memo)}>
+            <TextField label="Memo" notice={characterLimitNotice(memo, invoiceLimits.memo)}>
               <Textarea
-                maxLength={limits.memo}
+                maxLength={invoiceLimits.memo}
                 placeholder="What this invoice covers"
                 value={memo}
                 onChange={(event) => setMemo(event.target.value)}

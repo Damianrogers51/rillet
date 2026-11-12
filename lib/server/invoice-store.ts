@@ -5,13 +5,16 @@ import { invoices } from "@/lib/db/schema";
 import type { CreateInvoiceRequest, Customer, InvoiceCounts, InvoiceInput, InvoicePage } from "@/lib/api-types";
 import {
   currencies,
+  invoiceLimits,
   invoiceNumberAfter,
   isReadyToSend,
   type Invoice,
   type InvoiceActivity,
+  type LineItem,
   type PaymentStatus,
 } from "@/lib/invoices";
 import { getDb } from "@/lib/db/client";
+import { getCompany } from "@/lib/server/company-store";
 
 export type StoreResult<T> = { ok: true; value: T } | { ok: false; status: number; error: string };
 
@@ -162,11 +165,13 @@ function uniqueViolation(error: unknown): string | undefined {
 export async function createInvoice({ id, send, ...input }: CreateInvoiceRequest): Promise<StoreResult<Invoice>> {
   if (await findInvoice(id)) return conflict("An invoice with this id already exists");
   const db = await getDb();
+  const { today } = await getCompany();
   // Someone else can take the next number between reading it and inserting, so a clash just tries the one after.
   for (let attempt = 0; attempt < 5; attempt++) {
-    const invoiceNumber = await peekInvoiceNumber(input.issueDate);
+    const invoiceNumber = await peekInvoiceNumber(today);
     const invoice: Invoice = {
       ...input,
+      issueDate: today,
       id,
       invoiceNumber,
       status: send ? "Sent" : "Draft",
@@ -215,10 +220,13 @@ export async function sendInvoice(
   const existing = await findInvoice(id);
   if (!existing) return notFound;
   if (existing.status !== "Draft") return conflict("Only drafts can be sent");
-  const draft = input ? { ...existing, ...input, issueDate: existing.issueDate } : existing;
+  const { today } = await getCompany();
+  const draft = { ...existing, ...input, issueDate: today };
   if (!isReadyToSend(draft)) return { ok: false, status: 422, error: "This invoice isn't ready to send" };
+  if (draft.dueDate < today) return invalid("The due date can't be before the day it's sent");
   const updated = await updateInvoice(id, isDraft, {
-    ...(input && { ...input, issueDate: existing.issueDate }),
+    ...input,
+    issueDate: today,
     status: "Sent",
     paymentStatus: "Open",
     activity: appendActivity(activity(activityId, "Sent the invoice to the customer")),
@@ -255,6 +263,8 @@ export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
   const strings = ["customerName", "billingEmail", "billingAddress", "memo"] as const;
   for (const key of strings) {
     if (typeof value[key] !== "string") return invalid(`${key} must be a string`);
+    if (value[key].length > invoiceLimits[key])
+      return invalid(`${key} can be at most ${invoiceLimits[key]} characters`);
   }
   if (!(currencies as readonly unknown[]).includes(value.currency)) return invalid("Unsupported currency");
   for (const key of ["issueDate", "dueDate"] as const) {
@@ -265,6 +275,7 @@ export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
       return invalid(`${key} must be a non-negative number`);
     }
   }
+  if ((value.taxRate as number) > invoiceLimits.taxPercent / 100) return invalid("taxRate can be at most 1");
   if (!Array.isArray(value.lineItems)) return invalid("lineItems must be a list");
   const lineItemsValid = value.lineItems.every(
     (item) =>
@@ -275,6 +286,19 @@ export function parseInvoiceInput(body: unknown): StoreResult<InvoiceInput> {
       Number.isFinite(item.unitPrice),
   );
   if (!lineItemsValid) return invalid("Every line item needs an id, description, account code, quantity and price");
+  const lineItemsInRange = (value.lineItems as LineItem[]).every(
+    (item) =>
+      item.description.length <= invoiceLimits.description &&
+      item.quantity >= 0 &&
+      item.quantity <= invoiceLimits.quantity &&
+      Math.abs(item.unitPrice) <= invoiceLimits.unitPrice,
+  );
+  if (!lineItemsInRange) {
+    return invalid(
+      `Line item descriptions can be at most ${invoiceLimits.description} characters, quantities between 0 and ` +
+        `${invoiceLimits.quantity}, and unit prices within ±${invoiceLimits.unitPrice}`,
+    );
+  }
   const { customerName, billingEmail, billingAddress, memo, currency, issueDate, dueDate } = value as InvoiceInput;
   const { taxRate, discount, lineItems } = value as InvoiceInput;
   return {
