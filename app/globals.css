@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f4f1;
+  --background: #f6f4f1;
   --surface: #fcfbf8;
   --divider: #efede8;
   --foreground: var(--color-stone-900);
@@ -198,7 +198,6 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-stretch: 97%;

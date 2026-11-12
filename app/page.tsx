@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <main
       className={twMerge(
-        "flex flex-col items-start gap-8",
+        "flex flex-1 flex-col items-start gap-8 bg-background",
         "px-6 py-10 sm:px-16 sm:py-16 lg:px-[max(8rem,calc((100vw-80rem)/2))]",
       )}
     >

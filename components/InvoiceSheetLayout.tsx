@@ -118,7 +118,7 @@ export function PanelCloseButton({ onClick }: { onClick: () => void }) {
 }
 
 export const sidePanelBodyClassName =
-  "scrollbar-subtle flex flex-1 flex-col gap-13 overflow-y-auto bg-stone-900/[2%] px-(--form-px) pt-8 pb-8";
+  "scrollbar-subtle flex flex-1 flex-col gap-13 overflow-y-auto bg-background px-(--form-px) pt-8 pb-8";
 
 export const sidePanelFooterClassName = twMerge(
   "relative z-10 flex items-center gap-2",
