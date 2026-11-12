@@ -33,8 +33,8 @@ export function SegmentedFilter<Value extends string>({
         if (groupValue[0]) onChange(groupValue[0] as Value);
       }}
       className={twMerge(
-        // Scrolls sideways when the options don't fit; the vertical padding keeps focus rings from being clipped.
-        "-my-1 flex items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none]",
+        // Scrolls sideways when the options don't fit; the padding keeps focus rings from being clipped.
+        "-mx-1 -my-1 flex items-center gap-1 overflow-x-auto px-1 py-1 [scrollbar-width:none]",
         "text-[14px]",
         className,
       )}
