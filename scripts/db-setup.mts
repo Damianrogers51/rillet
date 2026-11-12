@@ -1,4 +1,4 @@
-import { connect, databaseUrl, setUp } from "@/lib/db/client";
+import { connect, databaseUrl } from "@/lib/db/client";
 
 // The local database sets itself up on first request, and opening it here would clash with a running dev server.
 if (!databaseUrl()) {
@@ -8,8 +8,8 @@ if (!databaseUrl()) {
 
 const connection = connect();
 try {
-  const { seeded } = await setUp(connection);
-  console.log(`Database migrated${seeded ? `, seeded ${seeded} invoices` : ""}`);
+  await connection.migrate();
+  console.log("Database migrated");
 } finally {
   await connection.close();
 }

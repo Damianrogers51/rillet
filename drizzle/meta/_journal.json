@@ -15,6 +15,20 @@
       "when": 1794502841626,
       "tag": "0001_enable_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794503570141,
+      "tag": "0002_company_and_prompt_examples",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794503570630,
+      "tag": "0003_seed_demo_data",
+      "breakpoints": true
     }
   ]
 }

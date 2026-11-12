@@ -1,4 +1,4 @@
-import { date, doublePrecision, index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { date, doublePrecision, index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { InvoiceActivity, InvoiceStatus, LineItem, PaymentStatus } from "@/lib/invoices";
 
 export const invoices = pgTable(
@@ -31,3 +31,21 @@ export const invoices = pgTable(
   // Supabase serves public tables over its REST API to anyone holding the public key; with row-level security on and
   // no policies, only the app's own database connection can reach this one.
 ).enableRLS();
+
+/** The business sending the invoices; a single row. */
+export const company = pgTable("company", {
+  id: integer().primaryKey().default(1),
+  name: text().notNull(),
+  industry: text().notNull(),
+  baseCurrency: text().notNull(),
+  // The demo runs on a fixed calendar so due dates read the same whenever it's opened.
+  asOfDate: date({ mode: "string" }).notNull(),
+}).enableRLS();
+
+/** Written invoice requests and the draft fields each should fill in, for testing request-to-draft generation. */
+export const invoicePromptExamples = pgTable("invoice_prompt_examples", {
+  id: text().primaryKey(),
+  label: text().notNull(),
+  input: text().notNull(),
+  expectedDraftFields: jsonb().$type<string[]>().notNull(),
+}).enableRLS();

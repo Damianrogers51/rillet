@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { InvoicesView } from "@/components/InvoicesView";
 import { invoicePageSize } from "@/lib/invoice-api";
-import { company, currentDate } from "@/lib/invoice-data";
+import { getCompany } from "@/lib/server/company";
 import { listInvoices } from "@/lib/server/invoice-store";
 
 export default function Home() {
@@ -18,7 +18,10 @@ export default function Home() {
 /** Renders the first page on the server so the table doesn't start empty; React Query takes over from there. */
 async function Invoices() {
   await connection();
-  const firstPage = await listInvoices({ status: null, cursor: null, limit: invoicePageSize });
+  const [firstPage, { company, today }] = await Promise.all([
+    listInvoices({ status: null, cursor: null, limit: invoicePageSize }),
+    getCompany(),
+  ]);
   if (!firstPage.ok) throw new Error(firstPage.error);
-  return <InvoicesView initialPage={firstPage.value} company={company} today={currentDate} />;
+  return <InvoicesView initialPage={firstPage.value} company={company} today={today} />;
 }

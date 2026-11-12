@@ -1,6 +1,5 @@
 import { mkdirSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
-import { count } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
@@ -8,7 +7,6 @@ import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import { migrate as migratePostgres } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import * as schema from "@/lib/db/schema";
-import { invoices as seedInvoices } from "@/lib/invoice-data";
 
 export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -60,14 +58,4 @@ export function connect(): Connection {
     migrate: () => migratePglite(db, { migrationsFolder }),
     close: () => pglite.close(),
   };
-}
-
-/** Applies pending migrations, then fills an empty database with the sample invoices. */
-export async function setUp({ db, migrate }: Connection) {
-  await migrate();
-  const [{ total }] = await db.select({ total: count() }).from(schema.invoices);
-  if (total > 0) return { seeded: 0 };
-  const rows = seedInvoices.map((invoice) => ({ ...invoice, paidDate: invoice.paidDate ?? null }));
-  await db.insert(schema.invoices).values(rows).onConflictDoNothing();
-  return { seeded: rows.length };
 }
